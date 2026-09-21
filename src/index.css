@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand: #6366f1;
+    --color-brand-dim: #4338ca;
+    --surface-base: #f6f7fb;
+    --surface-card: #ffffff;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: #f6f7fb;
+    color: #1e293b;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #4f46e5, #818cf8, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .card-glow {
+    box-shadow: 0 0 0 1px #e3e5ef, 0 1px 2px rgba(30,41,59,0.04), 0 6px 20px rgba(30,41,59,0.05);
+  }
+  .card-glow:hover {
+    box-shadow: 0 0 0 1px #c7d2fe, 0 10px 28px rgba(79,70,229,0.1);
+  }
+}
+
+/* Rendered Markdown for Garden notes (editor preview + public reader page). */
+.prose-note {
+  color: #334155;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+.prose-note > :first-child { margin-top: 0; }
+.prose-note h1, .prose-note h2, .prose-note h3 {
+  color: #0f172a;
+  font-weight: 600;
+  margin-top: 1.75em;
+  margin-bottom: 0.5em;
+}
+.prose-note h1 { font-size: 1.5em; }
+.prose-note h2 { font-size: 1.25em; }
+.prose-note h3 { font-size: 1.1em; }
+.prose-note p { margin: 1em 0; }
+.prose-note a { color: #4f46e5; text-decoration: underline; text-underline-offset: 2px; }
+.prose-note ul, .prose-note ol { margin: 1em 0; padding-left: 1.5em; }
+.prose-note li { margin: 0.35em 0; }
+.prose-note ul { list-style: disc; }
+.prose-note ol { list-style: decimal; }
+.prose-note blockquote {
+  border-left: 2px solid #818cf8;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #64748b;
+}
+.prose-note code {
+  background: #eef0f8;
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  color: #4338ca;
+}
+.prose-note pre {
+  background: #f6f7fb;
+  border: 1px solid #e3e5ef;
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+.prose-note pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+.prose-note img { max-width: 100%; border-radius: 8px; }
+.prose-note hr { border: none; border-top: 1px solid #e3e5ef; margin: 2em 0; }
+.prose-note table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
+.prose-note th, .prose-note td { border: 1px solid #e3e5ef; padding: 0.5em 0.75em; text-align: left; }

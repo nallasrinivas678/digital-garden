@@ -1,0 +1,9 @@
+node_modules
+dist
+.env.local
+.env
+.DS_Store
+*.local
+
+# separate git repo (already pushed to its own GitHub repo)
+mobile/
