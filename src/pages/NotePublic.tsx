@@ -29,7 +29,7 @@ export default function NotePublic() {
         <div>
           <p className="text-sm text-slate-500">This note doesn't exist or isn't published.</p>
           <Link to="/" className="mt-3 inline-block font-mono text-xs text-brand-500 tracking-widest">
-            🌱 digital garden
+            🌱 TaskTide
           </Link>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function NotePublic() {
     <div className="min-h-screen bg-surface-base text-slate-800">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <Link to="/" className="font-mono text-xs text-brand-600 tracking-widest">
-          🌱 digital garden
+          🌱 TaskTide
         </Link>
 
         <header className="mt-8 mb-8 space-y-2">

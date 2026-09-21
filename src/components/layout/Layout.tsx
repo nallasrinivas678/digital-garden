@@ -9,7 +9,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className="border-t border-surface-border mt-20 py-8 text-center text-xs text-slate-500 font-mono">
-        🌱 <span className="text-brand-600">digital garden</span>
+        🌱 <span className="text-brand-600">TaskTide</span>
       </footer>
     </div>
   )

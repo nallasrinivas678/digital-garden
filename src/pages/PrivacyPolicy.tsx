@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
     <div className="min-h-screen bg-surface-base text-slate-800">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <Link to="/" className="font-mono text-xs text-brand-600 tracking-widest">
-          🌱 digital garden
+          🌱 TaskTide
         </Link>
 
         <header className="mt-8 mb-8 space-y-2">
@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
 
         <article className="prose-note space-y-6">
           <p>
-            Digital Garden ("the app") is a personal productivity tool — tasks, a calendar,
+            TaskTide ("the app") is a personal productivity tool — tasks, a calendar,
             a job-application tracker, and a notes garden. This policy covers both the web app
             and the iOS app, which share the same account and the same data.
           </p>

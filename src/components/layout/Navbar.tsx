@@ -8,7 +8,7 @@ export default function Navbar() {
     <nav className="fixed top-0 inset-x-0 z-50 border-b border-surface-border bg-surface-base/80 backdrop-blur-md">
       <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="font-mono text-sm font-medium text-brand-600 tracking-widest">
-          🌱 digital garden
+          🌱 TaskTide
         </Link>
         <button
           onClick={signOut}

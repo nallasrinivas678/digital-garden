@@ -11,7 +11,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm text-center card-glow rounded-2xl bg-surface-card p-8">
         <div className="text-3xl mb-2">🌱</div>
-        <h1 className="text-2xl font-semibold text-slate-900">Digital Garden</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">TaskTide</h1>
         <p className="mt-2 text-sm text-slate-500">
           Plan your days, track your career, and grow your notes.
         </p>

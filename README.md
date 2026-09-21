@@ -1,4 +1,4 @@
-# Digital Garden
+# TaskTide
 
 A private personal hub: plan your days (tasks, recurring reminders, upcoming
 appointments), track your job search, and grow a notes garden of tech
