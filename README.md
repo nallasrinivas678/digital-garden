@@ -85,7 +85,9 @@ of [`supabase/schema.sql`](supabase/schema.sql), and click **Run**. This sets up
 the shared `set_updated_at()` trigger function every other schema file relies
 on. Then run [`supabase/schema_scheduler.sql`](supabase/schema_scheduler.sql)
 (Tasks/Upcoming), [`supabase/schema_task_priority.sql`](supabase/schema_task_priority.sql)
-(task priority), [`supabase/schema_career.sql`](supabase/schema_career.sql)
+(task priority), [`supabase/schema_event_tags.sql`](supabase/schema_event_tags.sql)
+(tags on tasks/appointments/outings), [`supabase/schema_event_reminders.sql`](supabase/schema_event_reminders.sql)
+(in-app reminders), [`supabase/schema_career.sql`](supabase/schema_career.sql)
 (job applications), and [`supabase/schema_notes.sql`](supabase/schema_notes.sql)
 (Garden) the same way — each is additive and safe to re-run. If you ran an
 earlier version of this project, also run
