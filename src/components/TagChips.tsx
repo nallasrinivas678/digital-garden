@@ -13,7 +13,10 @@ function normalize(tag: string): string {
 }
 
 /** Editable tag-chip input, or a read-only chip list when `readOnly`/no `onChange`. */
-export default function TagChips({ tags, onChange, suggestions, readOnly, className }: TagChipsProps) {
+export default function TagChips({ tags: tagsProp, onChange, suggestions, readOnly, className }: TagChipsProps) {
+  // Defensive: rows fetched before the tags migration has been applied come
+  // back with tags === undefined even though the type says string[].
+  const tags = tagsProp ?? []
   const [draft, setDraft] = useState('')
   const editable = !readOnly && !!onChange
 

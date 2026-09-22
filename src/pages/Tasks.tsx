@@ -33,7 +33,7 @@ export default function Tasks() {
   const updateEvent = useUpdateEvent()
   const deleteEvent = useDeleteEvent()
   const tagSuggestions = useMemo(
-    () => Array.from(new Set(tasks?.flatMap((t) => t.tags) ?? [])).sort(),
+    () => Array.from(new Set(tasks?.flatMap((t) => t.tags ?? []) ?? [])).sort(),
     [tasks],
   )
 
