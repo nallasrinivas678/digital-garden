@@ -44,7 +44,7 @@ export default function UpcomingAppointments() {
   }, [items])
 
   const tagSuggestions = useMemo(
-    () => Array.from(new Set((items ?? []).flatMap((i) => i.event.tags))).sort(),
+    () => Array.from(new Set((items ?? []).flatMap((i) => i.event.tags ?? []))).sort(),
     [items],
   )
 

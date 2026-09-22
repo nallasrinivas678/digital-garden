@@ -16,7 +16,16 @@ interface ReminderToggleProps {
 }
 
 /** Small ⏰ popover toggle for enabling an in-app reminder and picking a lead time. */
-export default function ReminderToggle({ enabled, minutesBefore, onChange, className }: ReminderToggleProps) {
+export default function ReminderToggle({
+  enabled: enabledProp,
+  minutesBefore: minutesBeforeProp,
+  onChange,
+  className,
+}: ReminderToggleProps) {
+  // Defensive: rows fetched before the reminders migration has been applied
+  // come back with these fields undefined even though the type says otherwise.
+  const enabled = enabledProp ?? false
+  const minutesBefore = minutesBeforeProp ?? 0
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
