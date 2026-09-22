@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useOpenTasks, useCreateTask, useToggleTask, useUpdateEvent, useDeleteEvent } from '../lib/hooks'
 import { prettyDate, todayISO } from '../lib/dates'
 import DatePicker from '../components/DatePicker'
+import TagChips from '../components/TagChips'
+import ReminderToggle from '../components/ReminderToggle'
 import type { RecurrenceFreq, Task, TaskPriority } from '../types'
 
 const REPEAT_OPTIONS: { value: RecurrenceFreq | ''; label: string }[] = [
@@ -30,6 +32,10 @@ export default function Tasks() {
   const toggleTask = useToggleTask()
   const updateEvent = useUpdateEvent()
   const deleteEvent = useDeleteEvent()
+  const tagSuggestions = useMemo(
+    () => Array.from(new Set(tasks?.flatMap((t) => t.tags) ?? [])).sort(),
+    [tasks],
+  )
 
   return (
     <div className="space-y-3">
@@ -65,10 +71,11 @@ export default function Tasks() {
                   onToggle={() => toggleTask.mutate({ eventId: t.id, dueDate: t.due_date, done: !t.done })}
                   onEdit={(fields) => updateEvent.mutate({ id: t.id, ...fields })}
                   onDelete={() => deleteEvent.mutate(t.id)}
+                  tagSuggestions={tagSuggestions}
                 />
               ))
             )}
-            <NewTaskRow today={today} />
+            <NewTaskRow today={today} tagSuggestions={tagSuggestions} />
           </tbody>
         </table>
       </section>
@@ -82,6 +89,7 @@ function TaskRow({
   onToggle,
   onEdit,
   onDelete,
+  tagSuggestions,
 }: {
   task: Task
   today: string
@@ -92,8 +100,12 @@ function TaskRow({
     recurrenceFreq?: RecurrenceFreq | null
     notes?: string | null
     priority?: TaskPriority
+    tags?: string[]
+    remindEnabled?: boolean
+    remindMinutesBefore?: number
   }) => void
   onDelete: () => void
+  tagSuggestions: string[]
 }) {
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes ?? '')
@@ -153,6 +165,12 @@ function TaskRow({
               </span>
             )}
           </div>
+          <TagChips
+            tags={task.tags}
+            onChange={(tags) => onEdit({ tags })}
+            suggestions={tagSuggestions}
+            className="mt-0.5 pl-7"
+          />
         </td>
         <td className="py-1.5">
           <DatePicker
@@ -179,6 +197,11 @@ function TaskRow({
         </td>
         <td className="px-1.5 py-1.5">
           <div className="flex items-center">
+            <ReminderToggle
+              enabled={task.remind_enabled}
+              minutesBefore={task.remind_minutes_before}
+              onChange={(fields) => onEdit(fields)}
+            />
             <button
               onClick={() => setNotesOpen(!notesOpen)}
               aria-label={notesOpen ? 'Hide notes' : 'Show notes'}
@@ -220,18 +243,19 @@ function TaskRow({
   )
 }
 
-function NewTaskRow({ today }: { today: string }) {
+function NewTaskRow({ today, tagSuggestions }: { today: string; tagSuggestions: string[] }) {
   const createTask = useCreateTask()
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState(today)
   const [repeat, setRepeat] = useState<RecurrenceFreq | ''>('')
+  const [tags, setTags] = useState<string[]>([])
 
   function submit() {
     const trimmed = title.trim()
     if (!trimmed) return
     createTask.mutate(
-      { title: trimmed, dueDate, recurrenceFreq: repeat || null },
-      { onSuccess: () => setTitle('') },
+      { title: trimmed, dueDate, recurrenceFreq: repeat || null, tags },
+      { onSuccess: () => { setTitle(''); setTags([]) } },
     )
   }
 
@@ -249,6 +273,7 @@ function NewTaskRow({ today }: { today: string }) {
           placeholder="Add a task…"
           className={`${cellInputClass} placeholder-slate-400`}
         />
+        <TagChips tags={tags} onChange={setTags} suggestions={tagSuggestions} className="pl-1.5" />
       </td>
       <td className="py-1.5">
         <DatePicker

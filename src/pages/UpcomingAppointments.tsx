@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useCreateEvent, useEventsInRange, useToggleTask } from '../lib/hooks'
+import { useCreateEvent, useEventsInRange, useToggleTask, useUpdateEvent } from '../lib/hooks'
 import { addDaysISO, prettyDate, todayISO } from '../lib/dates'
 import DatePicker from '../components/DatePicker'
+import TagChips from '../components/TagChips'
+import ReminderToggle from '../components/ReminderToggle'
 import type { EventType, RecurrenceFreq, ScheduledItem } from '../types'
 
 const LOOKAHEAD_DAYS = 60
@@ -28,6 +30,7 @@ export default function UpcomingAppointments() {
   const end = addDaysISO(today, LOOKAHEAD_DAYS)
   const { data: items, isLoading } = useEventsInRange(today, end)
   const toggle = useToggleTask()
+  const updateEvent = useUpdateEvent()
 
   const groups = useMemo(() => {
     const upcoming = (items ?? []).filter((i) => i.event.type !== 'task')
@@ -39,6 +42,11 @@ export default function UpcomingAppointments() {
     }
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
   }, [items])
+
+  const tagSuggestions = useMemo(
+    () => Array.from(new Set((items ?? []).flatMap((i) => i.event.tags))).sort(),
+    [items],
+  )
 
   return (
     <div className="space-y-3">
@@ -83,8 +91,14 @@ export default function UpcomingAppointments() {
                           🔁
                         </span>
                       )}
+                      <TagChips readOnly tags={item.event.tags} className="inline-flex ml-1.5 align-middle" />
                     </span>
                     {item.start_time && <span className="text-xs font-mono text-slate-500">{item.start_time}</span>}
+                    <ReminderToggle
+                      enabled={item.event.remind_enabled}
+                      minutesBefore={item.event.remind_minutes_before}
+                      onChange={(fields) => updateEvent.mutate({ id: item.event.id, ...fields })}
+                    />
                   </li>
                 ))}
               </ul>
@@ -94,27 +108,28 @@ export default function UpcomingAppointments() {
       </section>
 
       <section className="card-glow rounded-xl bg-surface-card p-4">
-        <AddEventForm defaultDate={today} />
+        <AddEventForm defaultDate={today} tagSuggestions={tagSuggestions} />
       </section>
     </div>
   )
 }
 
-function AddEventForm({ defaultDate }: { defaultDate: string }) {
+function AddEventForm({ defaultDate, tagSuggestions }: { defaultDate: string; tagSuggestions: string[] }) {
   const createEvent = useCreateEvent()
   const [title, setTitle] = useState('')
   const [type, setType] = useState<EventType>('appointment')
   const [date, setDate] = useState(defaultDate)
   const [startTime, setStartTime] = useState('')
   const [repeat, setRepeat] = useState<RecurrenceFreq | ''>('')
+  const [tags, setTags] = useState<string[]>([])
 
   function onAdd(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = title.trim()
     if (!trimmed) return
     createEvent.mutate(
-      { title: trimmed, type, date, startTime: startTime || null, recurrenceFreq: repeat || null },
-      { onSuccess: () => setTitle('') },
+      { title: trimmed, type, date, startTime: startTime || null, recurrenceFreq: repeat || null, tags },
+      { onSuccess: () => { setTitle(''); setTags([]) } },
     )
   }
 
@@ -126,6 +141,7 @@ function AddEventForm({ defaultDate }: { defaultDate: string }) {
         placeholder="Add an appointment or outing…"
         className="w-full rounded-lg bg-surface-base border border-surface-border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500"
       />
+      <TagChips tags={tags} onChange={setTags} suggestions={tagSuggestions} />
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <select
           value={type}

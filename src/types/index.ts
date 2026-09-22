@@ -28,6 +28,9 @@ export interface Event {
   recurrence_until: string | null
   recurrence_count: number | null
   priority: TaskPriority
+  tags: string[]
+  remind_enabled: boolean
+  remind_minutes_before: number
   created_at: string
   updated_at: string
 }
@@ -60,6 +63,9 @@ export interface Task {
   recurrence_freq: RecurrenceFreq | null
   notes: string | null
   priority: TaskPriority
+  tags: string[]
+  remind_enabled: boolean
+  remind_minutes_before: number
 }
 
 // What the Calendar view actually renders: a concrete occurrence of an
