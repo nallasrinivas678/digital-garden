@@ -70,6 +70,9 @@ export function useOpenTasks() {
           recurrence_freq: e.recurrence_freq,
           notes: e.notes,
           priority: e.priority,
+          tags: e.tags,
+          remind_enabled: e.remind_enabled,
+          remind_minutes_before: e.remind_minutes_before,
         })
       }
       tasks.sort((a, b) => a.due_date.localeCompare(b.due_date))
@@ -85,6 +88,9 @@ export interface CreateTaskInput {
   recurrenceInterval?: number
   notes?: string | null
   priority?: TaskPriority
+  tags?: string[]
+  remindEnabled?: boolean
+  remindMinutesBefore?: number
 }
 
 export function useCreateTask() {
@@ -102,6 +108,9 @@ export function useCreateTask() {
         recurrence_interval: input.recurrenceInterval ?? 1,
         notes: input.notes ?? null,
         priority: input.priority ?? 'none',
+        tags: input.tags ?? [],
+        remind_enabled: input.remindEnabled ?? false,
+        remind_minutes_before: input.remindMinutesBefore ?? 0,
       })
       if (error) throw error
     },
@@ -189,6 +198,9 @@ export interface CreateEventInput {
   endTime?: string | null
   recurrenceFreq?: RecurrenceFreq | null
   recurrenceInterval?: number
+  tags?: string[]
+  remindEnabled?: boolean
+  remindMinutesBefore?: number
 }
 
 export function useCreateEvent() {
@@ -206,6 +218,9 @@ export function useCreateEvent() {
         end_time: input.endTime ?? null,
         recurrence_freq: input.recurrenceFreq ?? null,
         recurrence_interval: input.recurrenceInterval ?? 1,
+        tags: input.tags ?? [],
+        remind_enabled: input.remindEnabled ?? false,
+        remind_minutes_before: input.remindMinutesBefore ?? 0,
       })
       if (error) throw error
     },
@@ -226,6 +241,9 @@ export interface UpdateEventInput {
   recurrenceInterval?: number
   notes?: string | null
   priority?: TaskPriority
+  tags?: string[]
+  remindEnabled?: boolean
+  remindMinutesBefore?: number
 }
 
 /** Edit an event's core fields (title, due/anchor date, time, recurrence). */
@@ -234,12 +252,14 @@ export function useUpdateEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: UpdateEventInput) => {
-      const { id, date, startTime, endTime, recurrenceFreq, ...rest } = input
+      const { id, date, startTime, endTime, recurrenceFreq, remindEnabled, remindMinutesBefore, ...rest } = input
       const fields: Record<string, unknown> = { ...rest }
       if (date !== undefined) fields.event_date = date
       if (startTime !== undefined) fields.start_time = startTime
       if (endTime !== undefined) fields.end_time = endTime
       if (recurrenceFreq !== undefined) fields.recurrence_freq = recurrenceFreq
+      if (remindEnabled !== undefined) fields.remind_enabled = remindEnabled
+      if (remindMinutesBefore !== undefined) fields.remind_minutes_before = remindMinutesBefore
       const { error } = await supabase.from('events').update(fields).eq('id', id)
       if (error) throw error
     },

@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
+import ReminderWatcher from '../ReminderWatcher'
+import ToastHost from '../Toast'
 
 export default function Layout() {
   return (
@@ -11,6 +13,8 @@ export default function Layout() {
       <footer className="border-t border-surface-border mt-20 py-8 text-center text-xs text-slate-500 font-mono">
         🌱 <span className="text-brand-600">TaskTide</span>
       </footer>
+      <ReminderWatcher />
+      <ToastHost />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import WeatherWidget from './WeatherWidget'
+import NotificationPermissionButton from './NotificationPermissionButton'
 
 export default function Navbar() {
   const { user, signOut } = useAuth()
@@ -13,6 +14,7 @@ export default function Navbar() {
         </Link>
         <div className="flex items-center gap-4">
           <WeatherWidget />
+          <NotificationPermissionButton />
           <button
             onClick={signOut}
             title={user?.email ?? 'Sign out'}
