@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { prettyDate } from '../lib/dates'
 import type { Note, NoteType } from '../types'
+import { ArrowRightIcon } from './icons'
 
 const TYPE_LABELS: Record<NoteType, string> = {
   'tech-note': 'Tech note',
@@ -27,8 +28,9 @@ export default function PostListItem({ note, username }: { note: Note; username:
         {note.published_at && <span>{prettyDate(note.published_at.slice(0, 10))}</span>}
         <span>{TYPE_LABELS[note.type]}</span>
       </div>
-      <h3 className="mt-1 text-base font-medium text-slate-900 group-hover:text-brand-600 transition-colors">
+      <h3 className="mt-1 flex items-center gap-2 text-base font-medium text-slate-900 group-hover:text-brand-600 transition-colors">
         {note.title || 'Untitled note'}
+        <ArrowRightIcon className="w-3.5 h-3.5 -translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
       </h3>
       {note.body && <p className="mt-1 text-sm text-slate-600">{excerpt(note.body)}</p>}
     </Link>

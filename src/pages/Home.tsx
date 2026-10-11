@@ -17,9 +17,11 @@ export default function Home() {
       <Hero profile={profile} />
 
       {featured.length > 0 && (
-        <section className="space-y-4">
+        <section id="projects" className="space-y-4 scroll-mt-20">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">Featured projects</h2>
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+              <span className="font-mono text-sm text-brand-500">02.</span> Featured projects
+            </h2>
             <Link to={`/${profile.username}/projects`} className="text-sm text-brand-600 hover:underline">
               All projects →
             </Link>
@@ -33,9 +35,11 @@ export default function Home() {
       )}
 
       {recentNotes && recentNotes.length > 0 && (
-        <section className="space-y-2">
+        <section className="space-y-2 scroll-mt-20">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">Recent from the Garden</h2>
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+              <span className="font-mono text-sm text-brand-500">03.</span> Recent from the Garden
+            </h2>
             <Link to={`/${profile.username}/notes`} className="text-sm text-brand-600 hover:underline">
               All posts →
             </Link>

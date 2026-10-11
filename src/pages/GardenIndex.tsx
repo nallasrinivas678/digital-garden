@@ -11,7 +11,7 @@ export default function GardenIndex() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 sm:py-14 space-y-6">
       <header>
-        <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">Garden</p>
+        <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">03. Garden</p>
         <h1 className="text-3xl font-semibold text-slate-900 mt-1">Notes</h1>
       </header>
 

@@ -1,6 +1,10 @@
-import { Link, Outlet, useParams } from 'react-router-dom'
+import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { usePublicProfile } from '../lib/hooks'
+import { GithubIcon, LinkedinIcon } from './icons'
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  `transition-colors ${isActive ? 'text-brand-600 font-medium' : 'text-slate-500 hover:text-slate-900'}`
 
 /**
  * Wraps every /:username/* public page. Resolves the username to a profile
@@ -21,19 +25,19 @@ export default function PublicProfileLayout() {
             🌱 TaskTide
           </Link>
           {profile && (
-            <div className="flex items-center gap-5 text-sm">
-              <Link to={`/${username}`} className="text-slate-500 hover:text-slate-900 transition-colors">
+            <div className="flex items-center gap-5 text-sm font-mono">
+              <NavLink to={`/${username}`} end className={navLinkClass}>
                 Home
-              </Link>
-              <Link to={`/${username}/projects`} className="text-slate-500 hover:text-slate-900 transition-colors">
+              </NavLink>
+              <NavLink to={`/${username}/projects`} className={navLinkClass}>
                 Projects
-              </Link>
-              <Link to={`/${username}/notes`} className="text-slate-500 hover:text-slate-900 transition-colors">
+              </NavLink>
+              <NavLink to={`/${username}/notes`} className={navLinkClass}>
                 Garden
-              </Link>
+              </NavLink>
               {profile.resume_url && (
                 <a href={profile.resume_url} className="text-slate-500 hover:text-slate-900 transition-colors">
-                  Resume
+                  Résumé
                 </a>
               )}
               <Link
@@ -62,8 +66,22 @@ export default function PublicProfileLayout() {
         )}
       </main>
 
-      <footer className="border-t border-surface-border mt-20 py-8 text-center text-xs text-slate-500 font-mono">
-        🌱 <span className="text-brand-600">TaskTide</span>
+      <footer className="border-t border-surface-border mt-20 py-10 text-center text-xs text-slate-500 font-mono">
+        {profile && (profile.github_url || profile.linkedin_url) && (
+          <div className="flex items-center justify-center gap-4 mb-4 text-slate-400">
+            {profile.github_url && (
+              <a href={profile.github_url} target="_blank" rel="noreferrer" aria-label="GitHub" className="hover:text-brand-600 transition-colors">
+                <GithubIcon className="w-4 h-4" />
+              </a>
+            )}
+            {profile.linkedin_url && (
+              <a href={profile.linkedin_url} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="hover:text-brand-600 transition-colors">
+                <LinkedinIcon className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        )}
+        Built with 🌱 <span className="text-brand-600">TaskTide</span>
       </footer>
     </div>
   )

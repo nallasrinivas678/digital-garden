@@ -11,7 +11,7 @@ export default function Projects() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 sm:py-14 space-y-6">
       <header>
-        <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">Portfolio</p>
+        <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">02. Portfolio</p>
         <h1 className="text-3xl font-semibold text-slate-900 mt-1">Projects</h1>
       </header>
       {isLoading ? (
