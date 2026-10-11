@@ -74,7 +74,7 @@ export default function GardenEditor() {
   function onDelete() {
     if (!note) return
     if (!window.confirm('Delete this note? This cannot be undone.')) return
-    deleteNote.mutate(note.id, { onSuccess: () => navigate('/') })
+    deleteNote.mutate(note.id, { onSuccess: () => navigate('/app') })
   }
 
   if (isLoading) {
@@ -84,7 +84,7 @@ export default function GardenEditor() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-3">
         <p className="text-sm text-slate-500">Note not found.</p>
-        <Link to="/" className="text-xs text-brand-500 hover:underline">
+        <Link to="/app" className="text-xs text-brand-500 hover:underline">
           ← Back to Dashboard
         </Link>
       </div>
@@ -94,7 +94,7 @@ export default function GardenEditor() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       <header className="flex items-center justify-between">
-        <Link to="/" className="text-xs text-slate-500 hover:text-slate-900 transition-colors">
+        <Link to="/app" className="text-xs text-slate-500 hover:text-slate-900 transition-colors">
           ← Dashboard
         </Link>
         <div className="flex items-center gap-3">

@@ -22,7 +22,8 @@ is underway, see [mobile/](mobile/README.md).
 - **Tasks** — the landing page: open tasks sorted by due date, with a checkbox and an inline add form. Due dates are picked from a popover calendar (`DatePicker`), not the native browser date input.
 - **Upcoming** — appointments and outings for the next two months, grouped by day, with a quick add form (including recurring ones). Replaced the old month-grid Calendar view.
 - **Career** — job application tracker: company, role, status pipeline (saved → applied → interviewing → offer/rejected/withdrawn), contact info, next follow-up date, compensation, and notes.
-- **Garden** — write, publish, and export Markdown notes (tech notes, exercises, system design write-ups) at a public `/notes/:slug` page.
+- **Garden** — write, publish, and export Markdown notes (tech notes, exercises, system design write-ups) at a public `/:username/notes/:slug` page.
+- **Public portfolio** — any signed-in user can claim a username and get a public portfolio (`/:username`, `/:username/projects`, `/:username/notes`) showcasing their own projects and published Garden posts.
 - **Google sign-in** via Supabase Auth. Every row is protected by Row Level Security, so you only ever see your own data.
 - **Privacy policy** — public, unauthenticated page at `/privacy` (required by app store listings, not just a document).
 
@@ -88,8 +89,11 @@ on. Then run [`supabase/schema_scheduler.sql`](supabase/schema_scheduler.sql)
 (task priority), [`supabase/schema_event_tags.sql`](supabase/schema_event_tags.sql)
 (tags on tasks/appointments/outings), [`supabase/schema_event_reminders.sql`](supabase/schema_event_reminders.sql)
 (in-app reminders), [`supabase/schema_career.sql`](supabase/schema_career.sql)
-(job applications), and [`supabase/schema_notes.sql`](supabase/schema_notes.sql)
-(Garden) the same way — each is additive and safe to re-run. If you ran an
+(job applications), [`supabase/schema_notes.sql`](supabase/schema_notes.sql)
+(Garden), [`supabase/schema_assistant.sql`](supabase/schema_assistant.sql)
+(AI assistant conversations/connectors), and
+[`supabase/schema_portfolio.sql`](supabase/schema_portfolio.sql) (public
+portfolio) the same way — each is additive and safe to re-run. If you ran an
 earlier version of this project, also run
 [`supabase/schema_drop_unused.sql`](supabase/schema_drop_unused.sql) once to
 remove the old journal/habit tables (that feature was never built and has

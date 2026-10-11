@@ -5,7 +5,7 @@ export default function Login() {
   const { user, loading, signInWithGoogle } = useAuth()
 
   if (loading) return <FullScreenMessage text="Loading…" />
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/app" replace />
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">

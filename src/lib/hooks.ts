@@ -14,6 +14,8 @@ import type {
   EventOccurrence,
   JobApplication,
   Note,
+  PortfolioProfile,
+  PortfolioProject,
   RecurrenceFreq,
   RemoteType,
   ScheduledItem,
@@ -317,20 +319,41 @@ export function useNote(id: string | undefined) {
   })
 }
 
-/** A published note by slug, for the public reader page. Works signed-out. */
-export function usePublicNote(slug: string | undefined) {
+/** A published note by slug, scoped to one user's portfolio. Works signed-out. */
+export function usePublicNote(userId: string | undefined, slug: string | undefined) {
   return useQuery({
-    queryKey: ['public-note', slug],
-    enabled: !!slug,
+    queryKey: ['public-note', userId, slug],
+    enabled: !!userId && !!slug,
     queryFn: async (): Promise<Note | null> => {
       const { data, error } = await supabase
         .from('notes')
         .select('*')
+        .eq('user_id', userId)
         .eq('slug', slug)
         .eq('status', 'published')
         .maybeSingle()
       if (error) throw error
       return data as Note | null
+    },
+  })
+}
+
+/** One user's published notes, newest-published first. Works signed-out. */
+export function usePublicNotes(userId: string | undefined, limit?: number) {
+  return useQuery({
+    queryKey: ['public-notes', userId, limit],
+    enabled: !!userId,
+    queryFn: async (): Promise<Note[]> => {
+      let query = supabase
+        .from('notes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+      if (limit) query = query.limit(limit)
+      const { data, error } = await query
+      if (error) throw error
+      return (data ?? []) as Note[]
     },
   })
 }
@@ -378,7 +401,7 @@ export function useUpdateNote() {
     onSuccess: (note) => {
       qc.invalidateQueries({ queryKey: ['notes', user?.id] })
       qc.invalidateQueries({ queryKey: ['note', note.id] })
-      qc.invalidateQueries({ queryKey: ['public-note', note.slug] })
+      qc.invalidateQueries({ queryKey: ['public-note', note.user_id, note.slug] })
     },
   })
 }
@@ -392,6 +415,214 @@ export function useDeleteNote() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notes', user?.id] }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Public portfolio (/:username) — profile + projects. Profile reads/writes
+// are keyed on username for public lookups and on the signed-in user's id
+// for the owner's own editing screens.
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the signed-in user is allowed to claim a portfolio right now
+ * (see portfolio_allowlist + is_portfolio_allowlisted() in
+ * schema_portfolio.sql). Sign-in and the rest of the app stay open to
+ * everyone — only claiming a username is gated while this is a pilot.
+ */
+export function usePortfolioAllowlisted() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['portfolio-allowlisted', user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase.rpc('is_portfolio_allowlisted')
+      if (error) throw error
+      return !!data
+    },
+  })
+}
+
+/** Resolves a username to its public profile. Works signed-out. */
+export function usePublicProfile(username: string | undefined) {
+  return useQuery({
+    queryKey: ['public-profile', username],
+    enabled: !!username,
+    queryFn: async (): Promise<PortfolioProfile | null> => {
+      const { data, error } = await supabase
+        .from('portfolio_profiles')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle()
+      if (error) throw error
+      return data as PortfolioProfile | null
+    },
+  })
+}
+
+/** The signed-in user's own profile, or null if they haven't claimed a username yet. */
+export function useMyPortfolioProfile() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-portfolio-profile', user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<PortfolioProfile | null> => {
+      const { data, error } = await supabase.from('portfolio_profiles').select('*').maybeSingle()
+      if (error) throw error
+      return data as PortfolioProfile | null
+    },
+  })
+}
+
+export interface ClaimUsernameInput {
+  username: string
+  display_name: string
+  title?: string
+  bio?: string
+  github_url?: string
+  linkedin_url?: string
+  resume_url?: string
+}
+
+export function useClaimUsername() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: ClaimUsernameInput) => {
+      if (!user) throw new Error('Not signed in')
+      const { data, error } = await supabase
+        .from('portfolio_profiles')
+        .insert({ user_id: user.id, ...input })
+        .select()
+        .single()
+      if (error) {
+        if (error.code === '23505') throw new Error('That username is already taken')
+        throw error
+      }
+      return data as PortfolioProfile
+    },
+    onSuccess: (profile) => {
+      qc.invalidateQueries({ queryKey: ['my-portfolio-profile', user?.id] })
+      qc.invalidateQueries({ queryKey: ['public-profile', profile.username] })
+    },
+  })
+}
+
+export function useUpdatePortfolioProfile() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (fields: Partial<ClaimUsernameInput>) => {
+      if (!user) throw new Error('Not signed in')
+      const { data, error } = await supabase
+        .from('portfolio_profiles')
+        .update(fields)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+      if (error) {
+        if (error.code === '23505') throw new Error('That username is already taken')
+        throw error
+      }
+      return data as PortfolioProfile
+    },
+    onSuccess: (profile) => {
+      qc.invalidateQueries({ queryKey: ['my-portfolio-profile', user?.id] })
+      qc.invalidateQueries({ queryKey: ['public-profile', profile.username] })
+    },
+  })
+}
+
+/** One user's portfolio projects, in display order. Works signed-out. */
+export function usePublicProjects(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['public-projects', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<PortfolioProject[]> => {
+      const { data, error } = await supabase
+        .from('portfolio_projects')
+        .select('*')
+        .eq('user_id', userId)
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as PortfolioProject[]
+    },
+  })
+}
+
+/** The signed-in user's own portfolio projects, for the "Manage portfolio" screen. */
+export function useMyPortfolioProjects() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['my-portfolio-projects', user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<PortfolioProject[]> => {
+      const { data, error } = await supabase
+        .from('portfolio_projects')
+        .select('*')
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      return (data ?? []) as PortfolioProject[]
+    },
+  })
+}
+
+export interface PortfolioProjectInput {
+  name: string
+  description?: string | null
+  live_url?: string | null
+  repo_url?: string | null
+  stack?: string[]
+  highlights?: string[]
+  related_post_slug?: string | null
+  sort_order?: number
+}
+
+export function useCreatePortfolioProject() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: PortfolioProjectInput) => {
+      if (!user) throw new Error('Not signed in')
+      const { data, error } = await supabase
+        .from('portfolio_projects')
+        .insert({ user_id: user.id, ...input })
+        .select()
+        .single()
+      if (error) throw error
+      return data as PortfolioProject
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-portfolio-projects', user?.id] }),
+  })
+}
+
+export function useUpdatePortfolioProject() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...fields }: PortfolioProjectInput & { id: string }) => {
+      const { data, error } = await supabase
+        .from('portfolio_projects')
+        .update(fields)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as PortfolioProject
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-portfolio-projects', user?.id] }),
+  })
+}
+
+export function useDeletePortfolioProject() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('portfolio_projects').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-portfolio-projects', user?.id] }),
   })
 }
 

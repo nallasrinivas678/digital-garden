@@ -135,3 +135,35 @@ export interface Note {
   created_at: string
   updated_at: string
 }
+
+// ---------------------------------------------------------------------------
+// Public portfolio — multi-tenant profile + projects shown at /:username.
+// ---------------------------------------------------------------------------
+
+export interface PortfolioProfile {
+  user_id: string
+  username: string
+  display_name: string
+  title: string | null
+  bio: string | null
+  github_url: string | null
+  linkedin_url: string | null
+  resume_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PortfolioProject {
+  id: string
+  user_id: string
+  name: string
+  description: string | null
+  live_url: string | null
+  repo_url: string | null
+  stack: string[]
+  highlights: string[]
+  related_post_slug: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}

@@ -16,7 +16,7 @@ export default function GardenList() {
   function onNew() {
     createNote.mutate(
       { title: 'Untitled note' },
-      { onSuccess: (note) => navigate(`/garden/${note.id}`) },
+      { onSuccess: (note) => navigate(`/app/garden/${note.id}`) },
     )
   }
 
@@ -58,7 +58,7 @@ export default function GardenList() {
 function NoteRow({ note }: { note: Note }) {
   return (
     <li>
-      <Link to={`/garden/${note.id}`} className="flex items-center gap-3 py-3 group">
+      <Link to={`/app/garden/${note.id}`} className="flex items-center gap-3 py-3 group">
         <span className="flex-1 text-sm text-slate-800 truncate group-hover:text-slate-900 transition-colors">
           {note.title || 'Untitled note'}
         </span>
