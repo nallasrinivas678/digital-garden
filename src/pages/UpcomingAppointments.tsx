@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useCreateEvent, useEventsInRange, useToggleTask, useUpdateEvent } from '../lib/hooks'
+import { useCreateEvent, useDeleteEvent, useEventsInRange, useToggleTask, useUpdateEvent } from '../lib/hooks'
 import { addDaysISO, prettyDate, todayISO } from '../lib/dates'
 import DatePicker from '../components/DatePicker'
 import TagChips from '../components/TagChips'
@@ -16,6 +16,7 @@ const TYPE_OPTIONS: { value: EventType; label: string }[] = [
 const REPEAT_OPTIONS: { value: RecurrenceFreq | ''; label: string }[] = [
   { value: '', label: 'Does not repeat' },
   { value: 'daily', label: 'Daily' },
+  { value: 'daily', label: 'Daily' },
   { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
   { value: 'yearly', label: 'Yearly' },
@@ -31,6 +32,7 @@ export default function UpcomingAppointments() {
   const { data: items, isLoading } = useEventsInRange(today, end)
   const toggle = useToggleTask()
   const updateEvent = useUpdateEvent()
+  const deleteEvent = useDeleteEvent()
 
   const groups = useMemo(() => {
     const upcoming = (items ?? []).filter((i) => i.event.type !== 'task')
@@ -99,6 +101,15 @@ export default function UpcomingAppointments() {
                       minutesBefore={item.event.remind_minutes_before}
                       onChange={(fields) => updateEvent.mutate({ id: item.event.id, ...fields })}
                     />
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete "${item.title}"?`)) deleteEvent.mutate(item.event.id)
+                      }}
+                      aria-label="Delete"
+                      className="h-6 w-6 shrink-0 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      ×
+                    </button>
                   </li>
                 ))}
               </ul>

@@ -1,0 +1,47 @@
+SRINIVAS NALLA
+Senior Software Engineer  |  Distributed Systems & Backend Infrastructure
+Bay Area, CA  •  303-802-9343  •  nallasrinivas678@gmail.com  •  linkedin.com/in/srinivas-n-7a9665109
+SUMMARY
+Senior backend engineer with 10+ years building high-throughput, event-driven distributed systems. At GEICO, architected telematics pipelines processing 1M+ events/day at 99.99% uptime and drove a cutover strategy delivering $22M in annualized savings. Deep in Go, C#/.NET, and Java 17 with hands-on Kafka event streaming — designing consumer groups and stream processing to classify and risk-score driver trip events in production. AWS Solutions Architect certified. Targeting senior/principal backend roles where scale, reliability, and system design are the core of the job.
+KEY ACHIEVEMENTS
+$22M annualized cost savings from telematics enrollment cutover strategy.
+1M+ telematics events/day processed at 99.99% uptime.
+8M active users served at 99.9% uptime with zero post-launch security breaches.
+TECHNICAL SKILLS
+Languages: Go, C#, Java 17, TypeScript, SQL (T-SQL)
+Backend: .NET Core 6/8, ASP.NET Core Web API, Spring Boot, gRPC, RESTful APIs
+Event Streaming & Messaging: Apache Kafka (KRaft, consumer groups, stream processing), Azure Service Bus, Event-Driven Architecture, Change Feed, Pub/Sub
+Cloud (Azure): Functions, Web Apps, SQL Database, Cosmos DB, Service Bus, Key Vault, Application Insights, Redis Cache, Azure DevOps (CI/CD), AAD B2C
+Cloud (AWS): EC2, S3, Lambda, IAM, SNS
+Data & Databases: MS SQL Server, Azure SQL, Cosmos DB, Redis, Entity Framework Core, Dapper
+Architecture: Microservices, Domain-Driven Design, Event-Driven Architecture, Distributed Systems, SOLID, High-Availability Systems
+Observability: Azure Application Insights, Distributed Tracing, Alerting & SLA Monitoring
+DevOps & Tools: Docker, Kubernetes, Git, Azure DevOps, CI/CD Pipelines, Playwright (BDD/SpecFlow)
+Certifications: AWS Certified Solutions Architect, AWS Certified SysOps Administrator
+PROFESSIONAL EXPERIENCE
+GEICO  |  Senior Software EngineerJul 2023 – Present
+Backend systems for telematics data processing on commercial and personal auto lines — high-throughput APIs, event streaming pipelines, and compliance frameworks serving millions of customers.
+Cut telematics data-processing failures 15% by designing asynchronous event pipelines (Azure Service Bus) processing 1M+ events/day at 99.99% uptime.
+Classified and risk-scored driver trip events in real time by building Kafka event-streaming consumers (Java 17) that flag risky vs. safe driving behavior for downstream pricing and telematics scoring.
+Delivered $22M in annualized cost savings by architecting and executing a technical cutover strategy for telematics enrollments.
+Served 8M active users at 99.9% uptime with zero post-launch security breaches by engineering 15+ secure REST APIs on Azure Functions (C#) for customer-facing mobile apps.
+Reduced Cosmos DB read load 50% and improved MTTR 40% by introducing read replicas and Change Feed with proactive Application Insights alerting.
+Cut new-product launch cycle time 40% by generalizing the telematics platform — core services built in Go with Java 17 supporting components — into a reusable multi-tenant SaaS foundation.
+Achieved 100% NY DFS regulatory alignment by designing the compliance framework (APIs, background jobs, API gateway).
+Increased test coverage 45% and eliminated ~20 hrs manual QA/sprint by building an end-to-end Playwright/SpecFlow BDD suite.
+Caprus IT (Client: Cuyahoga County Juvenile Court)  |  Senior Software EngineerAug 2022 – Jul 2023
+Reduced code redundancy 40% by architecting secure SPAs and microservices (.NET Core 6, C#, React, Azure) and migrating a legacy NHibernate backend to EF6-based services.
+Cut Crystal Reports generation time 30% by tuning EF Core/Dapper queries and refactoring stored procedures.
+Caprus IT (Client: Redwood Logistics)  |  Senior Software EngineerNov 2021 – Aug 2022
+Built a microservices platform (.NET Core 3.1, DDD) and React/Redux-Saga SPAs for logistics workflows, integrating Azure Service Bus, Cognitive Search, Redis Cache, and Auth0.
+Caprus IT (Client: KY Administrative Office of Courts)  |  Lead Software DeveloperApr 2020 – Nov 2021
+Modernized legacy court applications to .NET Core / React SPAs with Azure AD B2C authentication while leading and mentoring a team of 8 engineers through the full SDLC.
+HCL Global Systems (Client: KY Administrative Office of Courts)  |  Software DeveloperSep 2019 – Apr 2020
+Reduced UI load time 30% and report generation time 60% by optimizing full-stack applications (C#, ASP.NET Core, SQL).
+Infosmart Technologies (Client: KY Administrative Office of Courts)  |  Software DeveloperMay 2016 – Aug 2019
+Saved 10,000+ hours annually in administrative processing by building and deploying a unified electronic court case system across all Kentucky court districts.
+Infosmart Technologies (Client: HanesBrands Inc.)  |  Programmer AnalystJun 2015 – Apr 2016
+Supported 10,000+ monthly transactions by developing purchase-order modules (C#, VB.NET, T-SQL) and built SSIS ETL pipelines cutting data processing time 60%.
+EDUCATION
+M.S., Electrical EngineeringUniversity of South Alabama
+B.Tech., Electrical & Electronics EngineeringJawaharlal Nehru Technological University, India
