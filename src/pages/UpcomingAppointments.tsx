@@ -39,8 +39,27 @@ export default function UpcomingAppointments() {
 
   const groups = useMemo(() => {
     const upcoming = (items ?? []).filter((i) => i.event.type !== 'task')
-    const map = new Map<string, ScheduledItem[]>()
+
+    // A recurring appointment/outing only ever shows its single next
+    // occurrence here (like Tasks does for recurring tasks) — otherwise a
+    // daily item would list once per day across the whole lookahead window.
+    // `items` is already sorted ascending by date, so the first not-done
+    // occurrence seen per event is the earliest one; if every occurrence
+    // seen so far is done, keep replacing until a not-done one turns up.
+    const nextByEvent = new Map<string, ScheduledItem>()
+    const collapsed: ScheduledItem[] = []
     for (const item of upcoming) {
+      if (!item.event.recurrence_freq) {
+        collapsed.push(item)
+        continue
+      }
+      const picked = nextByEvent.get(item.event.id)
+      if (!picked || (picked.done && !item.done)) nextByEvent.set(item.event.id, item)
+    }
+    collapsed.push(...nextByEvent.values())
+
+    const map = new Map<string, ScheduledItem[]>()
+    for (const item of collapsed) {
       const arr = map.get(item.date) ?? []
       arr.push(item)
       map.set(item.date, arr)
