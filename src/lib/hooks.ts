@@ -386,6 +386,7 @@ export interface UpdateNoteInput {
   tags?: string[]
   status?: Note['status']
   published_at?: string | null
+  canonical_url?: string | null
 }
 
 export function useUpdateNote() {
