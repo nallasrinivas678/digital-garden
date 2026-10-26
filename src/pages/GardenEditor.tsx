@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useDeleteNote, useNote, useUpdateNote } from '../lib/hooks'
+import { useDeleteNote, useMyPortfolioProfile, useNote, useUpdateNote } from '../lib/hooks'
 import { renderMarkdown } from '../lib/markdown'
 import { slugify } from '../lib/slug'
 import type { NoteType } from '../types'
@@ -15,6 +15,7 @@ export default function GardenEditor() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: note, isLoading } = useNote(id)
+  const { data: profile } = useMyPortfolioProfile()
   const updateNote = useUpdateNote()
   const deleteNote = useDeleteNote()
 
@@ -23,6 +24,7 @@ export default function GardenEditor() {
   const [type, setType] = useState<NoteType>('tech-note')
   const [tagsInput, setTagsInput] = useState('')
   const [body, setBody] = useState('')
+  const [canonicalUrl, setCanonicalUrl] = useState('')
   const [dirty, setDirty] = useState(false)
   const [tab, setTab] = useState<'write' | 'preview'>('write')
   const [slugError, setSlugError] = useState('')
@@ -34,9 +36,14 @@ export default function GardenEditor() {
       setType(note.type)
       setTagsInput(note.tags.join(', '))
       setBody(note.body)
+      setCanonicalUrl(note.canonical_url ?? '')
       setDirty(false)
     }
   }, [note])
+
+  const defaultPublicUrl =
+    profile && note ? `https://tasktide.app/${profile.username}/notes/${note.slug}` : ''
+  const resolvedCanonicalUrl = canonicalUrl.trim() || defaultPublicUrl
 
   function markDirty() {
     setDirty(true)
@@ -50,7 +57,7 @@ export default function GardenEditor() {
       .map((t) => t.trim())
       .filter(Boolean)
     updateNote.mutate(
-      { id: note.id, title, slug, type, tags, body },
+      { id: note.id, title, slug, type, tags, body, canonical_url: canonicalUrl.trim() || null },
       {
         onSuccess: () => setDirty(false),
         onError: (err) => {
@@ -166,6 +173,19 @@ export default function GardenEditor() {
       </div>
       {slugError && <p className="text-xs text-red-400">{slugError}</p>}
 
+      <label className="flex items-center gap-1.5 text-xs text-slate-500">
+        Canonical URL
+        <input
+          value={canonicalUrl}
+          onChange={(e) => {
+            setCanonicalUrl(e.target.value)
+            markDirty()
+          }}
+          placeholder={defaultPublicUrl || 'defaults to this post’s own public page'}
+          className="flex-1 min-w-[16rem] rounded-lg bg-surface-base border border-surface-border px-2.5 py-1 text-xs font-mono text-slate-700 placeholder-slate-400 focus:outline-none focus:border-brand-500"
+        />
+      </label>
+
       <section className="card-glow rounded-xl bg-surface-card p-1">
         <div className="flex items-center gap-1 px-4 pt-3">
           <button
@@ -225,17 +245,26 @@ export default function GardenEditor() {
         </div>
       </div>
 
-      {note.status === 'published' && <ExportPanel body={body} />}
+      {note.status === 'published' && (
+        <ExportPanel body={body} canonicalUrl={resolvedCanonicalUrl} />
+      )}
     </div>
   )
 }
 
-function ExportPanel({ body }: { body: string }) {
+function ExportPanel({ body, canonicalUrl }: { body: string; canonicalUrl: string }) {
   const [copied, setCopied] = useState<'md' | 'html' | null>(null)
 
   async function copy(kind: 'md' | 'html') {
-    const text = kind === 'md' ? body : renderMarkdown(body)
-    await navigator.clipboard.writeText(text)
+    if (kind === 'md') {
+      const footer = canonicalUrl ? `\n\n---\n*Originally published at [${canonicalUrl}](${canonicalUrl})*` : ''
+      await navigator.clipboard.writeText(body + footer)
+    } else {
+      const footer = canonicalUrl
+        ? `<hr><p><em>Originally published at <a href="${canonicalUrl}">${canonicalUrl}</a></em></p>`
+        : ''
+      await navigator.clipboard.writeText(renderMarkdown(body) + footer)
+    }
     setCopied(kind)
     setTimeout(() => setCopied(null), 1500)
   }

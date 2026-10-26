@@ -132,6 +132,7 @@ export interface Note {
   tags: string[]
   status: NoteStatus
   published_at: string | null
+  canonical_url: string | null
   created_at: string
   updated_at: string
 }
