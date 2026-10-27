@@ -4,5 +4,5 @@
 // just a single source of truth read by whatever needs to gate on it.
 export const featureFlags = {
   jobTracker: false, // the Career (job application tracker) module
-  notes: false, // the Garden (notes) module
+  notes: true, // the Garden (notes) module
 } as const
