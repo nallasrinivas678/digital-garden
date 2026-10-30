@@ -71,6 +71,7 @@ export function useOpenTasks() {
           recurring: !!e.recurrence_freq,
           recurrence_freq: e.recurrence_freq,
           notes: e.notes,
+          location: e.location,
           priority: e.priority,
           tags: e.tags,
           remind_enabled: e.remind_enabled,
@@ -89,6 +90,7 @@ export interface CreateTaskInput {
   recurrenceFreq?: RecurrenceFreq | null
   recurrenceInterval?: number
   notes?: string | null
+  location?: string | null
   priority?: TaskPriority
   tags?: string[]
   remindEnabled?: boolean
@@ -109,6 +111,7 @@ export function useCreateTask() {
         recurrence_freq: input.recurrenceFreq ?? null,
         recurrence_interval: input.recurrenceInterval ?? 1,
         notes: input.notes ?? null,
+        location: input.location ?? null,
         priority: input.priority ?? 'none',
         tags: input.tags ?? [],
         remind_enabled: input.remindEnabled ?? false,
@@ -200,6 +203,7 @@ export interface CreateEventInput {
   endTime?: string | null
   recurrenceFreq?: RecurrenceFreq | null
   recurrenceInterval?: number
+  location?: string | null
   tags?: string[]
   remindEnabled?: boolean
   remindMinutesBefore?: number
@@ -220,6 +224,7 @@ export function useCreateEvent() {
         end_time: input.endTime ?? null,
         recurrence_freq: input.recurrenceFreq ?? null,
         recurrence_interval: input.recurrenceInterval ?? 1,
+        location: input.location ?? null,
         tags: input.tags ?? [],
         remind_enabled: input.remindEnabled ?? false,
         remind_minutes_before: input.remindMinutesBefore ?? 0,
@@ -242,6 +247,7 @@ export interface UpdateEventInput {
   recurrenceFreq?: RecurrenceFreq | null
   recurrenceInterval?: number
   notes?: string | null
+  location?: string | null
   priority?: TaskPriority
   tags?: string[]
   remindEnabled?: boolean

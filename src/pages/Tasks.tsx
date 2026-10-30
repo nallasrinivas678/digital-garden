@@ -99,6 +99,7 @@ function TaskRow({
     date?: string
     recurrenceFreq?: RecurrenceFreq | null
     notes?: string | null
+    location?: string | null
     priority?: TaskPriority
     tags?: string[]
     remindEnabled?: boolean
@@ -110,6 +111,7 @@ function TaskRow({
   const [title, setTitle] = useState(task.title)
   const [notes, setNotes] = useState(task.notes ?? '')
   const [notesOpen, setNotesOpen] = useState(false)
+  const [location, setLocation] = useState(task.location ?? '')
   const overdue = !task.done && task.due_date < today
   const isToday = task.due_date === today
 
@@ -170,6 +172,16 @@ function TaskRow({
             onChange={(tags) => onEdit({ tags })}
             suggestions={tagSuggestions}
             className="mt-0.5 pl-7"
+          />
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            onBlur={() => {
+              const trimmed = location.trim()
+              if (trimmed !== (task.location ?? '')) onEdit({ location: trimmed || null })
+            }}
+            placeholder="Add location…"
+            className={`${cellInputClass} pl-7 font-semibold text-xs text-slate-600 placeholder-slate-300 placeholder:font-normal`}
           />
         </td>
         <td className="py-1.5">
@@ -249,13 +261,14 @@ function NewTaskRow({ today, tagSuggestions }: { today: string; tagSuggestions: 
   const [dueDate, setDueDate] = useState(today)
   const [repeat, setRepeat] = useState<RecurrenceFreq | ''>('')
   const [tags, setTags] = useState<string[]>([])
+  const [location, setLocation] = useState('')
 
   function submit() {
     const trimmed = title.trim()
     if (!trimmed) return
     createTask.mutate(
-      { title: trimmed, dueDate, recurrenceFreq: repeat || null, tags },
-      { onSuccess: () => { setTitle(''); setTags([]) } },
+      { title: trimmed, dueDate, recurrenceFreq: repeat || null, tags, location: location.trim() || null },
+      { onSuccess: () => { setTitle(''); setTags([]); setLocation('') } },
     )
   }
 
@@ -274,6 +287,15 @@ function NewTaskRow({ today, tagSuggestions }: { today: string; tagSuggestions: 
           className={`${cellInputClass} placeholder-slate-400`}
         />
         <TagChips tags={tags} onChange={setTags} suggestions={tagSuggestions} className="pl-1.5" />
+        <input
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') submit()
+          }}
+          placeholder="Location…"
+          className={`${cellInputClass} pl-1.5 font-semibold text-xs text-slate-500 placeholder-slate-300 placeholder:font-normal`}
+        />
       </td>
       <td className="py-1.5">
         <DatePicker

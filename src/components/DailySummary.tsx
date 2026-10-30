@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useAuth } from '../lib/auth'
 import { useDailySummary, GoogleNotConnectedError, type EmailHighlight } from '../lib/dailySummary'
 import { connectGoogleAccount } from '../lib/googleConnect'
+import { renderMarkdown } from '../lib/markdown'
 import { showToast } from './Toast'
 
-const CATEGORY_LABEL: Record<EmailHighlight['category'], string> = {
-  order: 'Orders',
-  bill: 'Bills',
-  travel: 'Travel',
+const CATEGORY_META: Record<EmailHighlight['category'], { label: string; className: string }> = {
+  order: { label: 'Orders', className: 'bg-brand-100 text-brand-700' },
+  bill: { label: 'Bills', className: 'bg-amber-100 text-amber-700' },
+  travel: { label: 'Travel', className: 'bg-sky-100 text-sky-700' },
 }
 
 function formatShort(iso: string): string {
@@ -65,21 +66,27 @@ export default function DailySummary() {
   if (error || !data) return null
 
   const emailsByCategory = groupByCategory(data.emails)
+  const categories = Object.entries(emailsByCategory) as [EmailHighlight['category'], EmailHighlight[]][]
 
   return (
     <section className="card-glow rounded-xl bg-surface-card px-4 py-3 space-y-3">
       <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">Daily summary</p>
-      <p className="text-sm text-slate-700 whitespace-pre-line">{data.summary}</p>
+      <div
+        className="prose-note text-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: renderMarkdown(data.summary) }}
+      />
 
-      {Object.keys(emailsByCategory).length > 0 && (
-        <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-          {Object.entries(emailsByCategory).map(([category, emails]) => (
-            <div key={category}>
-              <p className="font-medium text-slate-600">{CATEGORY_LABEL[category as EmailHighlight['category']]}</p>
-              <ul className="space-y-0.5">
+      {categories.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-surface-border">
+          {categories.map(([category, emails]) => (
+            <div key={category} className="pt-2">
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${CATEGORY_META[category].className}`}>
+                {CATEGORY_META[category].label}
+              </span>
+              <ul className="mt-1.5 space-y-1 text-xs text-slate-500">
                 {emails.map((email) => (
                   <li key={`${email.subject}-${email.date}`}>
-                    {formatShort(email.date)} — {email.subject}
+                    <span className="font-mono text-slate-400">{formatShort(email.date)}</span> — {email.subject}
                   </li>
                 ))}
               </ul>
