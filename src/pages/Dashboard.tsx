@@ -3,15 +3,17 @@ import UpcomingAppointments from './UpcomingAppointments'
 import Career from './Career'
 import GardenList from './GardenList'
 import TodayBrief from '../components/TodayBrief'
+import DailySummary from '../components/DailySummary'
 import { featureFlags } from '../lib/featureFlags'
 import { getUserDisplayName, useAuth } from '../lib/auth'
 
 // The landing page: everything in one scrollable view instead of separate
 // tabs. A "Welcome, <name>" greeting (from the Google profile) sits above
-// TodayBrief, a slim "what needs attention" summary. Below that, a single
-// linear column in reading order: Tasks, Upcoming (appointments/outings),
-// Career, Garden. Career and Garden are behind feature flags (see
-// lib/featureFlags.ts) and may not render.
+// TodayBrief, a slim "what needs attention" summary, then DailySummary (a
+// written Gmail/Calendar briefing from llm-gateway - renders nothing until
+// Google is connected). Below that, a single linear column in reading
+// order: Tasks, Upcoming (appointments/outings), Career, Garden. Career and
+// Garden are behind feature flags (see lib/featureFlags.ts) and may not render.
 export default function Dashboard() {
   const { user } = useAuth()
   const { full: name } = getUserDisplayName(user)
@@ -25,6 +27,7 @@ export default function Dashboard() {
         </header>
       )}
       <TodayBrief />
+      <DailySummary />
       <Tasks />
       <UpcomingAppointments />
       {featureFlags.jobTracker && <Career />}
