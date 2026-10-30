@@ -133,6 +133,7 @@ function AppointmentRow({
 }) {
   const [title, setTitle] = useState(item.title)
   const [editOpen, setEditOpen] = useState(false)
+  const [location, setLocation] = useState(item.event.location ?? '')
 
   return (
     <li className="py-2.5">
@@ -171,6 +172,16 @@ function AppointmentRow({
             onChange={(tags) => onEdit({ tags })}
             suggestions={tagSuggestions}
             className="mt-0.5 pl-1.5"
+          />
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            onBlur={() => {
+              const trimmed = location.trim()
+              if (trimmed !== (item.event.location ?? '')) onEdit({ location: trimmed || null })
+            }}
+            placeholder="Add location…"
+            className={`${cellInputClass} pl-1.5 font-semibold text-xs text-slate-600 placeholder-slate-300 placeholder:font-normal`}
           />
         </div>
         {item.start_time && <span className="text-xs font-mono text-slate-500">{item.start_time}</span>}
@@ -235,14 +246,23 @@ function AddEventForm({ defaultDate, tagSuggestions }: { defaultDate: string; ta
   const [startTime, setStartTime] = useState('')
   const [repeat, setRepeat] = useState<RecurrenceFreq | ''>('')
   const [tags, setTags] = useState<string[]>([])
+  const [location, setLocation] = useState('')
 
   function onAdd(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = title.trim()
     if (!trimmed) return
     createEvent.mutate(
-      { title: trimmed, type, date, startTime: startTime || null, recurrenceFreq: repeat || null, tags },
-      { onSuccess: () => { setTitle(''); setTags([]) } },
+      {
+        title: trimmed,
+        type,
+        date,
+        startTime: startTime || null,
+        recurrenceFreq: repeat || null,
+        tags,
+        location: location.trim() || null,
+      },
+      { onSuccess: () => { setTitle(''); setTags([]); setLocation('') } },
     )
   }
 
@@ -252,6 +272,12 @@ function AddEventForm({ defaultDate, tagSuggestions }: { defaultDate: string; ta
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Add an appointment or outing…"
+        className="w-full rounded-lg bg-surface-base border border-surface-border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500"
+      />
+      <input
+        value={location}
+        onChange={(e) => setLocation(e.target.value)}
+        placeholder="Location (optional)…"
         className="w-full rounded-lg bg-surface-base border border-surface-border px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500"
       />
       <TagChips tags={tags} onChange={setTags} suggestions={tagSuggestions} />

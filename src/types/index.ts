@@ -62,6 +62,7 @@ export interface Task {
   recurring: boolean
   recurrence_freq: RecurrenceFreq | null
   notes: string | null
+  location: string | null
   priority: TaskPriority
   tags: string[]
   remind_enabled: boolean
