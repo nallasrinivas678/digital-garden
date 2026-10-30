@@ -24,17 +24,18 @@ function groupByCategory(emails: EmailHighlight[]) {
 
 // Daily briefing from llm-gateway: Gmail orders/bills/travel + upcoming
 // Calendar events, condensed into one written summary. Sits right below
-// TodayBrief on the Dashboard. Follows TodayBrief/WeatherWidget's
-// render-null-while-absent convention - no spinners, and a transient
-// backend failure just means the card doesn't show rather than a visible
-// error, since this is a non-critical enrichment widget. The one exception
-// is "you haven't connected Google yet", which gets its own actionable card.
+// TodayBrief on the Dashboard. The LLM call alone takes ~10s, so this
+// streams over SSE and shows a status line + the summary text as it's
+// written, instead of the long silent wait a single request would have. A
+// transient backend failure (other than "you haven't connected Google yet",
+// which gets its own actionable card) still just hides the card rather than
+// showing a visible error, since this is a non-critical enrichment widget.
 export default function DailySummary() {
   const { session } = useAuth()
-  const { data, error, isLoading } = useDailySummary()
+  const { status, summary, emails, done, error, isLoading } = useDailySummary()
   const [isConnecting, setIsConnecting] = useState(false)
 
-  if (isLoading || !session) return null
+  if (!session) return null
 
   if (error instanceof GoogleNotConnectedError) {
     async function handleConnect() {
@@ -63,28 +64,37 @@ export default function DailySummary() {
     )
   }
 
-  if (error || !data) return null
+  if (error) return null
 
-  const emailsByCategory = groupByCategory(data.emails)
+  // While loading and nothing has arrived yet, show the status line in place of a spinner
+  // rather than render null - the only part of this component that breaks that convention,
+  // since a silent 10s wait here is exactly what read as "broken" before streaming.
+  if (isLoading && !summary && !status) return null
+
+  const emailsByCategory = groupByCategory(emails)
   const categories = Object.entries(emailsByCategory) as [EmailHighlight['category'], EmailHighlight[]][]
 
   return (
     <section className="card-glow rounded-xl bg-surface-card px-4 py-3 space-y-3">
       <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">Daily summary</p>
-      <div
-        className="prose-note text-sm max-w-none"
-        dangerouslySetInnerHTML={{ __html: renderMarkdown(data.summary) }}
-      />
+      {status && !summary ? (
+        <p className="text-sm text-slate-400 italic animate-pulse">{status}</p>
+      ) : (
+        <div
+          className="prose-note text-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(summary) }}
+        />
+      )}
 
-      {categories.length > 0 && (
+      {done && categories.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-surface-border">
-          {categories.map(([category, emails]) => (
+          {categories.map(([category, categoryEmails]) => (
             <div key={category} className="pt-2">
               <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${CATEGORY_META[category].className}`}>
                 {CATEGORY_META[category].label}
               </span>
               <ul className="mt-1.5 space-y-1 text-xs text-slate-500">
-                {emails.map((email) => (
+                {categoryEmails.map((email) => (
                   <li key={`${email.subject}-${email.date}`}>
                     <span className="font-mono text-slate-400">{formatShort(email.date)}</span> — {email.subject}
                   </li>
