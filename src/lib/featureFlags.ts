@@ -5,5 +5,5 @@
 export const featureFlags = {
   jobTracker: false, // the Career (job application tracker) module
   notes: true, // the Garden (notes) module
-  pdfQa: false, // PDF Q&A (upload a PDF, ask questions); turn on once llm-gateway's endpoints are deployed
+  pdfQa: true, // PDF Q&A (upload a PDF, ask questions) via llm-gateway's /assistant/docs endpoints
 } as const
