@@ -8,8 +8,10 @@ import { useAuth } from './auth'
 import { todayISO } from './dates'
 import { currentTaskOccurrence, resolveScheduledItems } from './recurrence'
 import { randomSuffix, slugify } from './slug'
+import { ingestDocument } from './docsApi'
 import type {
   ApplicationStatus,
+  Doc,
   Event,
   EventOccurrence,
   JobApplication,
@@ -751,5 +753,115 @@ export function useDeleteJobApplication() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['job-applications', user?.id] }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Documents (PDF Q&A). Rows and files live in Supabase (RLS: own rows/folder
+// only); processing and answering happen in llm-gateway (see docsApi.ts).
+// ---------------------------------------------------------------------------
+
+const MAX_PDF_BYTES = 20 * 1024 * 1024 // matches the `documents` bucket limit
+const POLL_MS = 3000
+
+// Poll while anything is still being processed, then stop.
+const pollWhileProcessing = (docs: Doc | Doc[] | null | undefined) =>
+  [docs].flat().some((d) => d?.status === 'processing') ? POLL_MS : false
+
+export function useDocuments() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['documents', user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<Doc[]> => {
+      const { data, error } = await supabase.from('documents').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []) as Doc[]
+    },
+    refetchInterval: (query) => pollWhileProcessing(query.state.data),
+  })
+}
+
+export function useDocument(id: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['document', id],
+    enabled: !!user && !!id,
+    queryFn: async (): Promise<Doc | null> => {
+      const { data, error } = await supabase.from('documents').select('*').eq('id', id).maybeSingle()
+      if (error) throw error
+      return data as Doc | null
+    },
+    refetchInterval: (query) => pollWhileProcessing(query.state.data),
+  })
+}
+
+/** Upload the PDF, create its row, then ask llm-gateway to process it. */
+export function useUploadDocument() {
+  const { user, session } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      if (!user || !session) throw new Error('Not signed in')
+      if (file.type !== 'application/pdf') throw new Error('Please choose a PDF file.')
+      if (file.size > MAX_PDF_BYTES) throw new Error('That file is over the 20 MB limit.')
+
+      // Upload first, then insert the row, so a failed upload never leaves a row stuck "processing".
+      const id = crypto.randomUUID()
+      const storagePath = `${user.id}/${id}.pdf`
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(storagePath, file, { contentType: 'application/pdf' })
+      if (uploadError) throw new Error("Couldn't upload the file. Please try again.")
+
+      const title = file.name.replace(/\.pdf$/i, '')
+      const { error: insertError } = await supabase
+        .from('documents')
+        .insert({ id, title, storage_path: storagePath })
+      if (insertError) {
+        await supabase.storage.from('documents').remove([storagePath])
+        throw new Error("Couldn't save the document. Please try again.")
+      }
+
+      try {
+        await ingestDocument(session.access_token, id)
+      } catch {
+        // The row would sit in "processing" forever; make it retryable instead.
+        await supabase
+          .from('documents')
+          .update({ status: 'failed', error: "Couldn't start processing. Use Retry." })
+          .eq('id', id)
+      }
+      return id
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['documents', user?.id] }),
+  })
+}
+
+/** Re-run processing for a failed (or stuck) document. */
+export function useRetryDocument() {
+  const { user, session } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!session) throw new Error('Not signed in')
+      await ingestDocument(session.access_token, id)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['documents', user?.id] }),
+  })
+}
+
+/** Remove the file first (stop if that fails), then the row; chunks cascade. */
+export function useDeleteDocument() {
+  const { user } = useAuth()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (doc: Doc) => {
+      const { error: fileError } = await supabase.storage.from('documents').remove([doc.storage_path])
+      if (fileError) throw fileError
+      const { error } = await supabase.from('documents').delete().eq('id', doc.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documents', user?.id] }),
   })
 }

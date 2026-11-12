@@ -2,6 +2,7 @@ import Tasks from './Tasks'
 import UpcomingAppointments from './UpcomingAppointments'
 import Career from './Career'
 import GardenList from './GardenList'
+import DocumentList from '../components/DocumentList'
 import TodayBrief from '../components/TodayBrief'
 import DailySummary from '../components/DailySummary'
 import { featureFlags } from '../lib/featureFlags'
@@ -32,6 +33,7 @@ export default function Dashboard() {
       <UpcomingAppointments />
       {featureFlags.jobTracker && <Career />}
       {featureFlags.notes && <GardenList />}
+      {featureFlags.pdfQa && <DocumentList />}
     </div>
   )
 }

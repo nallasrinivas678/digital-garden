@@ -169,3 +169,31 @@ export interface PortfolioProject {
   created_at: string
   updated_at: string
 }
+
+// ---------------------------------------------------------------------------
+// PDF Q&A — `documents` table (created by llm-gateway's supabase migration) and
+// the answer shape returned by POST /assistant/docs/ask.
+// ---------------------------------------------------------------------------
+
+export type DocStatus = 'processing' | 'ready' | 'failed'
+
+export interface Doc {
+  id: string
+  user_id: string
+  title: string
+  storage_path: string
+  status: DocStatus
+  error: string | null
+  page_count: number | null
+  created_at: string
+}
+
+export interface AskSource {
+  page: number
+  snippet: string
+}
+
+export interface AskResult {
+  answer: string
+  sources: AskSource[]
+}
