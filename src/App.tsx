@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard'
 import ManagePortfolio from './pages/ManagePortfolio'
 import GardenEditor from './pages/GardenEditor'
 import DocumentChat from './pages/DocumentChat'
+import GoogleCallback from './pages/GoogleCallback'
 import Landing from './pages/Landing'
 import Home from './pages/Home'
 import Projects from './pages/Projects'
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="/app/portfolio" element={<ManagePortfolio />} />
               <Route path="/app/garden/:id" element={<GardenEditor />} />
               <Route path="/app/docs/:id" element={<DocumentChat />} />
+              <Route path="/app/google/callback" element={<GoogleCallback />} />
             </Route>
             <Route path="/:username" element={<PublicProfileLayout />}>
               <Route index element={<Home />} />
