@@ -29,6 +29,14 @@ export interface CalendarHighlight {
 // so the UI can offer a "Connect Google" action instead of a generic error.
 export class GoogleNotConnectedError extends Error {}
 
+// The summary can come from the Node service (assistant-node) by setting
+// VITE_DAILY_SUMMARY_API_URL; without it the llm-gateway URL is used, as before.
+// Google-connect always stays on llm-gateway (VITE_ASSISTANT_API_URL).
+const summaryBaseUrl = import.meta.env.VITE_DAILY_SUMMARY_API_URL || import.meta.env.VITE_ASSISTANT_API_URL
+
+// llm-gateway says "No Google tokens on file"; assistant-node says "not connected" or asks to reconnect.
+const needsGoogleConnect = (detail: string) => /No Google tokens on file|not connected|reconnect/i.test(detail)
+
 interface DailySummaryState {
   status: string | null
   summary: string
@@ -66,7 +74,7 @@ export function useDailySummary() {
 
     async function run() {
       try {
-        const res = await fetch(`${import.meta.env.VITE_ASSISTANT_API_URL}/assistant/daily-summary/stream`, {
+        const res = await fetch(`${summaryBaseUrl}/assistant/daily-summary/stream`, {
           headers: { Authorization: `Bearer ${accessToken}` },
           signal: controller.signal,
         })
@@ -115,7 +123,7 @@ export function useDailySummary() {
         }))
       } else if (event === 'error') {
         const detail = typeof payload.detail === 'string' ? payload.detail : 'Daily summary stream failed'
-        setError(detail.includes('No Google tokens on file') ? new GoogleNotConnectedError(detail) : new Error(detail))
+        setError(needsGoogleConnect(detail) ? new GoogleNotConnectedError(detail) : new Error(detail))
       }
     }
 
