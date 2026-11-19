@@ -18,6 +18,13 @@ export interface RequirementResult {
   evidence: string
 }
 
+/** A readability check on the resume text. `message` is what was found, or what to fix when not ok. */
+export interface FormatCheck {
+  id: string
+  ok: boolean
+  message: string
+}
+
 export interface MatchView {
   matchId: string
   title: string
@@ -31,7 +38,12 @@ export interface MatchView {
   results: RequirementResult[]
   missing: Requirement[]
   reachedTarget: boolean
+  formatChecks: FormatCheck[]
 }
+
+/** Targets offered on the form. 80 is the service's default. */
+export const TARGET_CHOICES = [70, 75, 80, 85, 90] as const
+export const DEFAULT_TARGET = 80
 
 // Falls back to the daily summary address, since that is the same Node service.
 const baseUrl = () =>
@@ -91,7 +103,7 @@ export interface Confirmation {
 export interface RewriteProposal {
   baseVersion: number
   proposedText: string
-  changes: { requirementId: number; skill: string | null; bullet: string | null }[]
+  changes: { requirementId: number; skill: string | null; bullet: string | null; reworded: string | null }[]
   /** Confirmed skills for which no line was added, with the reason. */
   skipped: { requirementId: number; reason: string }[]
 }
@@ -116,7 +128,7 @@ export function acceptVersion(
 
 export function startMatch(
   accessToken: string,
-  input: { resumeText: string; jobText: string; jobUrl?: string },
+  input: { resumeText: string; jobText: string; jobUrl?: string; targetScore?: number },
 ): Promise<MatchView> {
   return call<MatchView>(accessToken, '/matches', json(input))
 }
