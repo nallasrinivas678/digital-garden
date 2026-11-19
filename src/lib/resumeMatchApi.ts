@@ -103,7 +103,7 @@ export interface Confirmation {
 export interface RewriteProposal {
   baseVersion: number
   proposedText: string
-  changes: { requirementId: number; skill: string | null; bullet: string | null }[]
+  changes: { requirementId: number; skill: string | null; bullet: string | null; reworded: string | null }[]
   /** Confirmed skills for which no line was added, with the reason. */
   skipped: { requirementId: number; reason: string }[]
 }
