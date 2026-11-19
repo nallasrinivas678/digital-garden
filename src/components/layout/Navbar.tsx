@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
+import { featureFlags } from '../../lib/featureFlags'
 import { useMyPortfolioProfile } from '../../lib/hooks'
 import WeatherWidget from './WeatherWidget'
 import NotificationPermissionButton from './NotificationPermissionButton'
@@ -15,6 +16,11 @@ export default function Navbar() {
           🌱 TaskTide
         </Link>
         <div className="flex items-center gap-4">
+          {featureFlags.resumeMatch && (
+            <Link to="/app/resume-match" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Resume
+            </Link>
+          )}
           {profile && (
             <Link to="/app/portfolio" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Portfolio
