@@ -2,15 +2,18 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import {
+  DEFAULT_TARGET,
   DETAIL_MAX_CHARS,
   DETAIL_MIN_CHARS,
   ResumeMatchError,
+  TARGET_CHOICES,
   acceptVersion,
   extractResumeText,
   fetchJobText,
   proposeRewrite,
   startMatch,
   type Confirmation,
+  type FormatCheck,
   type MatchView,
   type RequirementStatus,
   type RewriteProposal,
@@ -51,6 +54,7 @@ export default function ResumeMatch() {
   const [resumeText, setResumeText] = useState('')
   const [jobText, setJobText] = useState('')
   const [jobUrl, setJobUrl] = useState('')
+  const [target, setTarget] = useState<number>(DEFAULT_TARGET)
   const [busy, setBusy] = useState<'pdf' | 'job' | 'score' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<MatchView | null>(null)
@@ -76,7 +80,7 @@ export default function ResumeMatch() {
     token &&
     run('score', async () => {
       setResult(null)
-      const view = await startMatch(token, { resumeText, jobText, jobUrl: jobUrl.trim() || undefined })
+      const view = await startMatch(token, { resumeText, jobText, jobUrl: jobUrl.trim() || undefined, targetScore: target })
       setCurrentText(resumeText.trim())
       setResult(view)
     })
@@ -147,8 +151,27 @@ export default function ResumeMatch() {
         <button onClick={onScore} disabled={busy !== null || !canScore} className={buttonClass}>
           {busy === 'score' ? 'Scoring…' : 'Score my resume'}
         </button>
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          Target
+          <select
+            value={target}
+            onChange={(e) => setTarget(Number(e.target.value))}
+            disabled={busy !== null}
+            className="rounded-lg border border-surface-border bg-white px-2 py-1.5 text-sm text-slate-800"
+          >
+            {TARGET_CHOICES.map((t) => (
+              <option key={t} value={t}>
+                {t}%
+              </option>
+            ))}
+          </select>
+        </label>
         {busy === 'score' && <span className="text-sm text-slate-400 italic animate-pulse">This takes about 10 seconds.</span>}
       </div>
+      <p className="text-xs text-slate-500 -mt-3">
+        Around 70 to 80% is a strong match for most jobs. The score is feedback on your resume, not a prediction of any employer’s system or
+        of an interview.
+      </p>
 
       <ErrorNote message={error} />
 
@@ -360,6 +383,8 @@ function ResultPanel({
         />
       )}
 
+      <ReadabilityCard checks={result.formatChecks} />
+
       <section className="card-glow rounded-xl bg-surface-card p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-medium text-slate-900">Your resume, version {result.version}</h2>
@@ -452,6 +477,32 @@ function ProposalReview({
           Discard
         </button>
       </div>
+    </section>
+  )
+}
+
+// Can a machine and a recruiter read the resume? Separate from the match score: only what to fix is shown.
+function ReadabilityCard({ checks }: { checks: FormatCheck[] }) {
+  const problems = checks.filter((c) => !c.ok)
+  return (
+    <section className="card-glow rounded-xl bg-surface-card p-5 space-y-2">
+      <h2 className="text-sm font-medium text-slate-900">Readability</h2>
+      {problems.length === 0 ? (
+        <p className="text-sm text-emerald-700">All {checks.length} checks passed: contact details, headings, dates, bullets, length and layout.</p>
+      ) : (
+        <>
+          <p className="text-xs text-slate-500">
+            {checks.length - problems.length} of {checks.length} checks passed. These do not change your match score.
+          </p>
+          <ul className="space-y-1.5">
+            {problems.map((c) => (
+              <li key={c.id} className="text-sm text-amber-800 bg-amber-50 rounded-lg px-3 py-2">
+                {c.message}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   )
 }
