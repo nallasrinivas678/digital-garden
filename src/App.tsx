@@ -12,6 +12,7 @@ import ManagePortfolio from './pages/ManagePortfolio'
 import GardenEditor from './pages/GardenEditor'
 import DocumentChat from './pages/DocumentChat'
 import GoogleCallback from './pages/GoogleCallback'
+import Chat from './pages/Chat'
 import ResumeMatch from './pages/ResumeMatch'
 import { featureFlags } from './lib/featureFlags'
 import Landing from './pages/Landing'
@@ -56,6 +57,7 @@ export default function App() {
               <Route path="/app/garden/:id" element={<GardenEditor />} />
               <Route path="/app/docs/:id" element={<DocumentChat />} />
               <Route path="/app/google/callback" element={<GoogleCallback />} />
+              {featureFlags.chat && <Route path="/app/chat" element={<Chat />} />}
               {featureFlags.resumeMatch && <Route path="/app/resume-match" element={<ResumeMatch />} />}
             </Route>
             <Route path="/:username" element={<PublicProfileLayout />}>

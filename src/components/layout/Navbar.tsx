@@ -16,6 +16,11 @@ export default function Navbar() {
           🌱 TaskTide
         </Link>
         <div className="flex items-center gap-4">
+          {featureFlags.chat && (
+            <Link to="/app/chat" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Chat
+            </Link>
+          )}
           {featureFlags.resumeMatch && (
             <Link to="/app/resume-match" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Resume
