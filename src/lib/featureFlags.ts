@@ -6,5 +6,6 @@ export const featureFlags = {
   jobTracker: false, // the Career (job application tracker) module
   notes: true, // the Garden (notes) module
   pdfQa: true, // PDF Q&A (upload a PDF, ask questions) via llm-gateway's /assistant/docs endpoints
+  chat: true, // Assistant chat (/app/chat): calendar, email drafts, docs, tasks and web search via the assistant's /assistant/chat endpoint
   resumeMatch: true, // Resume match: score a resume against a job description via assistant-node's /resume endpoints
 } as const
