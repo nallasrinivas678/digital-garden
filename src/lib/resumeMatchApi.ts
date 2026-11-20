@@ -108,6 +108,15 @@ export interface RewriteProposal {
   changes: { requirementId: number; skill: string | null; bullet: string | null; reworded: string | null }[]
   /** Confirmed skills for which no line was added, with the reason. */
   skipped: { requirementId: number; reason: string }[]
+  /** New lines whose place could not be found. The user picks the role each goes under. */
+  unplaced: { requirementId: number; bullet: string }[]
+  /** The resume lines a bullet can go under, most recent first. */
+  roles: string[]
+}
+
+/** Puts a bullet under the role the user chose and returns the new text. Nothing is saved. */
+export async function placeBullet(accessToken: string, input: { resumeText: string; under: string; bullet: string }): Promise<string> {
+  return (await call<{ resumeText: string }>(accessToken, '/place-bullet', json(input))).resumeText
 }
 
 // The same limits the service enforces on the user's own words, so the form can say so before sending.
