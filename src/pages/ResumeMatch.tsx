@@ -10,6 +10,7 @@ import {
   acceptVersion,
   extractResumeText,
   fetchJobText,
+  placeBullet,
   proposeRewrite,
   startMatch,
   type Confirmation,
@@ -209,7 +210,7 @@ function ResultPanel({
   const [details, setDetails] = useState<Record<number, string>>({})
   const [proposal, setProposal] = useState<RewriteProposal | null>(null)
   const [editText, setEditText] = useState<string | null>(null)
-  const [busy, setBusy] = useState<'propose' | 'accept' | null>(null)
+  const [busy, setBusy] = useState<'propose' | 'accept' | 'place' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -238,6 +239,21 @@ function ResultPanel({
     try {
       setProposal(await proposeRewrite(token, result.matchId, confirmed))
       setEditText(null)
+    } catch (err) {
+      setError(errorMessage(err))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // Puts a line the service could not place under the role the user chose.
+  async function onPlace(requirementId: number, bullet: string, under: string) {
+    if (!token || busy || !proposal) return
+    setBusy('place')
+    setError(null)
+    try {
+      const proposedText = await placeBullet(token, { resumeText: proposal.proposedText, under, bullet })
+      setProposal({ ...proposal, proposedText, unplaced: proposal.unplaced.filter((u) => u.requirementId !== requirementId) })
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -374,6 +390,7 @@ function ResultPanel({
           editText={editText}
           onEdit={() => setEditText(proposal.proposedText)}
           onEditChange={setEditText}
+          onPlace={onPlace}
           onAccept={onAccept}
           onDiscard={() => {
             setProposal(null)
@@ -407,6 +424,7 @@ function ProposalReview({
   editText,
   onEdit,
   onEditChange,
+  onPlace,
   onAccept,
   onDiscard,
   busy,
@@ -417,12 +435,14 @@ function ProposalReview({
   editText: string | null
   onEdit: () => void
   onEditChange: (text: string) => void
+  onPlace: (requirementId: number, bullet: string, under: string) => void
   onAccept: () => void
   onDiscard: () => void
   busy: boolean
 }) {
   const known = new Set(before.split('\n').map((l) => l.trim()))
   const afterLines = proposal.proposedText.split('\n')
+  const [under, setUnder] = useState<Record<number, string>>({})
 
   return (
     <section className="card-glow rounded-xl bg-surface-card p-5 space-y-3">
@@ -453,6 +473,41 @@ function ProposalReview({
           )}
         </div>
       </div>
+
+      {proposal.unplaced.length > 0 && editText === null && (
+        <ul className="space-y-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          {proposal.unplaced.map((u) => (
+            <li key={u.requirementId} className="space-y-1">
+              <p>
+                Where does this line for “{nameOf(u.requirementId)}” go? “{u.bullet}”
+              </p>
+              <div className="flex gap-2">
+                <select
+                  value={under[u.requirementId] ?? ''}
+                  onChange={(e) => setUnder((s) => ({ ...s, [u.requirementId]: e.target.value }))}
+                  aria-label={`Put “${u.bullet}” under`}
+                  className={fieldClass}
+                >
+                  <option value="">Put it under…</option>
+                  {proposal.roles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => onPlace(u.requirementId, u.bullet, under[u.requirementId] ?? '')}
+                  disabled={busy || !under[u.requirementId]}
+                  className={secondaryButtonClass}
+                >
+                  Add
+                </button>
+              </div>
+            </li>
+          ))}
+          <li>If you skip a line, it is not added. You can also add it yourself with Edit.</li>
+        </ul>
+      )}
 
       {proposal.skipped.length > 0 && (
         <ul className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 space-y-1">
