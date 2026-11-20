@@ -81,7 +81,7 @@ export default function ResumeMatch() {
     run('score', async () => {
       setResult(null)
       const view = await startMatch(token, { resumeText, jobText, jobUrl: jobUrl.trim() || undefined, targetScore: target })
-      setCurrentText(resumeText.trim())
+      setCurrentText(view.resumeText)
       setResult(view)
     })
 
@@ -254,7 +254,7 @@ function ResultPanel({
       const view = await acceptVersion(token, result.matchId, { resumeText: text, confirmed, baseVersion: proposal.baseVersion })
       setProposal(null)
       setEditText(null)
-      onUpdated(view, text.trim())
+      onUpdated(view, view.resumeText)
     } catch (err) {
       setError(errorMessage(err))
     } finally {

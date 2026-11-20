@@ -38,6 +38,8 @@ export interface MatchView {
   results: RequirementResult[]
   missing: Requirement[]
   reachedTarget: boolean
+  /** The text of this version as the service saved it (hidden characters removed). */
+  resumeText: string
   formatChecks: FormatCheck[]
 }
 
