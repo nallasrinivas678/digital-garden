@@ -9,6 +9,21 @@ export interface ChatReply {
   reply: string
   /** Names of the tools the assistant used for this answer. */
   toolCallsExecuted: string[]
+  /** Changes the assistant proposed; nothing is made until the user approves each one. */
+  pendingActions: PendingAction[]
+}
+
+export interface PendingAction {
+  id: string
+  tool: string
+  /** Plain words for the card, e.g. `Add the task "Pay rent" due 2026-11-24`. */
+  preview: string
+}
+
+export interface ActionOutcome {
+  id: string
+  status: 'done' | 'failed' | 'rejected'
+  result: string | null
 }
 
 /** The service answers with a readable `error`; show it as is. */
@@ -20,17 +35,21 @@ export class ChatError extends Error {
   }
 }
 
-/** Plain words for the tool names shown under an answer. Unknown names are shown as they are. */
+/**
+ * Plain words for the tool names shown under an answer. Unknown names are shown as they are.
+ * A tool that changes something only proposes it (the user approves on a card), so its label says
+ * "Proposed", never that the change was made.
+ */
 const TOOL_LABELS: Record<string, string> = {
   list_events: 'Checked your calendar',
-  create_event: 'Added a calendar event',
+  create_event: 'Proposed a calendar event',
   search_emails: 'Searched your email',
-  create_draft: 'Saved an email draft',
+  create_draft: 'Proposed an email draft',
   read_doc: 'Read a Google Doc',
-  append_to_doc: 'Added to a Google Doc',
+  append_to_doc: 'Proposed an addition to a Google Doc',
   list_tasks: 'Looked at your tasks',
-  create_task: 'Added a task',
-  complete_task: 'Marked a task done',
+  create_task: 'Proposed a task',
+  complete_task: 'Proposed marking a task done',
   web_search: 'Searched the web',
 }
 
@@ -54,6 +73,8 @@ export interface Conversation {
   id: string
   title: string | null
   messages: SavedMessage[]
+  /** Proposed changes still waiting, so reopening the conversation shows the cards again. */
+  pendingActions: PendingAction[]
 }
 
 async function request(accessToken: string, path: string, init: RequestInit = {}): Promise<Response> {
@@ -93,3 +114,13 @@ export async function getConversation(accessToken: string, id: string): Promise<
 export async function deleteConversation(accessToken: string, id: string): Promise<void> {
   await request(accessToken, `/assistant/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
+
+// Approve runs the stored change as the user; reject drops it. Both answer 409 (with a readable
+// message) when the change was already decided or has expired.
+async function decide(accessToken: string, id: string, verb: 'approve' | 'reject'): Promise<ActionOutcome> {
+  const res = await request(accessToken, `/assistant/actions/${encodeURIComponent(id)}/${verb}`, { method: 'POST' })
+  return (await res.json()) as ActionOutcome
+}
+
+export const approveAction = (accessToken: string, id: string) => decide(accessToken, id, 'approve')
+export const rejectAction = (accessToken: string, id: string) => decide(accessToken, id, 'reject')
