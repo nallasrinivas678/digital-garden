@@ -77,10 +77,12 @@ async function call<T>(accessToken: string, path: string, init: RequestInit): Pr
     const body = (await res.json().catch(() => null)) as { detail?: unknown } | null
     throw new ResumeMatchError(typeof body?.detail === 'string' ? body.detail : 'Something went wrong. Please try again.', res.status)
   }
+  // A delete answers 204 with no body.
+  if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
 
-const json = (body: unknown): RequestInit => ({
+const json =(body: unknown): RequestInit => ({
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(body),
@@ -142,4 +144,30 @@ export function startMatch(
   input: { resumeText: string; jobText: string; jobUrl?: string; targetScore?: number },
 ): Promise<MatchView> {
   return call<MatchView>(accessToken, '/matches', json(input))
+}
+
+/** One saved match in the history list. */
+export interface MatchSummary {
+  id: string
+  title: string
+  jobUrl: string | null
+  createdAt: string
+  latestVersion: number
+  /** Null for a match with no saved version. */
+  latestScore: number | null
+}
+
+/** The user's saved matches, most recent first (the service returns up to 50). */
+export async function listMatches(accessToken: string): Promise<MatchSummary[]> {
+  return (await call<{ matches: MatchSummary[] }>(accessToken, '/matches', { method: 'GET' })).matches
+}
+
+/** One saved match as the screen shows it: its latest version, ready to continue from. */
+export function openMatch(accessToken: string, matchId: string): Promise<MatchView> {
+  return call<MatchView>(accessToken, `/matches/${encodeURIComponent(matchId)}`, { method: 'GET' })
+}
+
+/** Deletes a match and every version of it. */
+export function deleteMatch(accessToken: string, matchId: string): Promise<void> {
+  return call<void>(accessToken, `/matches/${encodeURIComponent(matchId)}`, { method: 'DELETE' })
 }
