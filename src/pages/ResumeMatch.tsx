@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import ResumePreview from '../components/ResumePreview'
@@ -9,13 +9,17 @@ import {
   ResumeMatchError,
   TARGET_CHOICES,
   acceptVersion,
+  deleteMatch,
   extractResumeText,
   fetchJobText,
+  listMatches,
+  openMatch,
   placeBullet,
   proposeRewrite,
   startMatch,
   type Confirmation,
   type FormatCheck,
+  type MatchSummary,
   type MatchView,
   type RequirementStatus,
   type RewriteProposal,
@@ -57,13 +61,30 @@ export default function ResumeMatch() {
   const [jobText, setJobText] = useState('')
   const [jobUrl, setJobUrl] = useState('')
   const [target, setTarget] = useState<number>(DEFAULT_TARGET)
-  const [busy, setBusy] = useState<'pdf' | 'job' | 'score' | null>(null)
+  const [busy, setBusy] = useState<'pdf' | 'job' | 'score' | 'open' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<MatchView | null>(null)
   // The text of the version shown in `result` (what the next rewrite starts from).
   const [currentText, setCurrentText] = useState('')
+  // The user's saved matches (null until loaded), for the list at the top.
+  const [saved, setSaved] = useState<MatchSummary[] | null>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
 
-  async function run(kind: 'pdf' | 'job' | 'score', action: () => Promise<void>) {
+  const refreshSaved = useCallback(async () => {
+    if (!token) return
+    try {
+      setSaved(await listMatches(token))
+    } catch {
+      // The list is a convenience; the page works without it.
+      setSaved((current) => current ?? [])
+    }
+  }, [token])
+
+  useEffect(() => {
+    void refreshSaved()
+  }, [refreshSaved])
+
+  async function run(kind: 'pdf' | 'job' | 'score' | 'open', action: () => Promise<void>) {
     if (!token || busy) return
     setBusy(kind)
     setError(null)
@@ -85,6 +106,25 @@ export default function ResumeMatch() {
       const view = await startMatch(token, { resumeText, jobText, jobUrl: jobUrl.trim() || undefined, targetScore: target })
       setCurrentText(view.resumeText)
       setResult(view)
+      void refreshSaved()
+    })
+
+  // Opens a saved match at its latest version, to read it or carry on adding skills.
+  const onOpen = (id: string) =>
+    token &&
+    run('open', async () => {
+      const view = await openMatch(token, id)
+      setCurrentText(view.resumeText)
+      setResult(view)
+      requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    })
+
+  const onDelete = (id: string) =>
+    token &&
+    run('open', async () => {
+      await deleteMatch(token, id)
+      if (result?.matchId === id) setResult(null)
+      await refreshSaved()
     })
 
   const canScore = resumeText.trim().length > 0 && jobText.trim().length > 0
@@ -98,6 +138,10 @@ export default function ResumeMatch() {
         <p className="font-mono text-xs text-brand-500 uppercase tracking-widest">Resume match</p>
         <h1 className="text-xl font-semibold text-slate-900 mt-1">How well does your resume fit this job?</h1>
       </header>
+
+      {saved && saved.length > 0 && (
+        <SavedMatches matches={saved} openId={result?.matchId ?? null} disabled={busy !== null} onOpen={onOpen} onDelete={onDelete} />
+      )}
 
       <section className="card-glow rounded-xl bg-surface-card p-5 space-y-3">
         <h2 className="text-sm font-medium text-slate-900">1. Your resume</h2>
@@ -177,18 +221,79 @@ export default function ResumeMatch() {
 
       <ErrorNote message={error} />
 
-      {result && (
-        <ResultPanel
-          key={result.matchId}
-          result={result}
-          currentText={currentText}
-          onUpdated={(view, text) => {
-            setResult(view)
-            setCurrentText(text)
-          }}
-        />
-      )}
+      <div ref={resultRef} className="scroll-mt-4">
+        {result && (
+          <ResultPanel
+            key={result.matchId}
+            result={result}
+            currentText={currentText}
+            onUpdated={(view, text) => {
+              setResult(view)
+              setCurrentText(text)
+              void refreshSaved()
+            }}
+          />
+        )}
+      </div>
     </div>
+  )
+}
+
+// The user's saved matches: reopen one to read it or carry on, or delete it (with every version).
+// Deleting takes two clicks, so a slip does not remove a match.
+function SavedMatches({
+  matches,
+  openId,
+  disabled,
+  onOpen,
+  onDelete,
+}: {
+  matches: MatchSummary[]
+  openId: string | null
+  disabled: boolean
+  onOpen: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const [confirming, setConfirming] = useState<string | null>(null)
+  return (
+    <section className="card-glow rounded-xl bg-surface-card p-5 space-y-3">
+      <h2 className="text-sm font-medium text-slate-900">Your saved matches</h2>
+      <ul className="max-h-56 overflow-auto divide-y divide-surface-border">
+        {matches.map((m) => (
+          <li key={m.id} className="flex items-center gap-2 py-1.5">
+            <button
+              onClick={() => onOpen(m.id)}
+              disabled={disabled}
+              aria-current={m.id === openId ? 'true' : undefined}
+              className={`flex-1 min-w-0 rounded-lg px-2 py-1 text-left hover:bg-surface-hover disabled:opacity-50 ${
+                m.id === openId ? 'bg-brand-50 text-brand-700' : 'text-slate-700'
+              }`}
+            >
+              <span className="block truncate text-sm">{m.title}</span>
+              <span className="block text-xs text-slate-400">
+                {m.latestScore === null ? 'No score yet' : `${m.latestScore}%`} · version {m.latestVersion} ·{' '}
+                {new Date(m.createdAt).toLocaleDateString()}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                if (confirming !== m.id) return setConfirming(m.id)
+                setConfirming(null)
+                onDelete(m.id)
+              }}
+              onBlur={() => setConfirming((c) => (c === m.id ? null : c))}
+              disabled={disabled}
+              aria-label={confirming === m.id ? `Confirm deleting ${m.title}` : `Delete ${m.title}`}
+              className={`shrink-0 rounded px-1.5 py-1 text-xs disabled:opacity-50 ${
+                confirming === m.id ? 'text-red-600 font-medium' : 'text-slate-400 hover:text-red-600'
+              }`}
+            >
+              {confirming === m.id ? 'Delete?' : '×'}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
