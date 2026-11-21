@@ -102,3 +102,23 @@
 .prose-note hr { border: none; border-top: 1px solid #e3e5ef; margin: 2em 0; }
 .prose-note table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9em; }
 .prose-note th, .prose-note td { border: 1px solid #e3e5ef; padding: 0.5em 0.75em; text-align: left; }
+
+/* Printing the resume preview (components/ResumePreview.tsx): only the resume is printed. Every other
+   child of <body> is hidden, and a page margin of 0 stops the browser from adding its own header and
+   footer (web address, date); the resume's own padding gives the margins instead. */
+@media print {
+  @page {
+    margin: 0;
+  }
+  body > *:not(.resume-print-root) {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .resume-print-root {
+    padding: 16mm 18mm;
+    background: #fff;
+    color: #000;
+  }
+}

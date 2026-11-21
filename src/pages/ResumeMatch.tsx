@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import ResumePreview from '../components/ResumePreview'
 import {
   DEFAULT_TARGET,
   DETAIL_MAX_CHARS,
@@ -411,6 +412,8 @@ function ResultPanel({
         </div>
         <textarea readOnly value={currentText} rows={12} className={`${fieldClass} font-mono text-xs bg-surface-base`} />
       </section>
+
+      <ResumePreview text={currentText} />
     </div>
   )
 }
