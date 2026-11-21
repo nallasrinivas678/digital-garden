@@ -2,13 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import {
+  approveAction,
   ChatError,
   deleteConversation,
   getConversation,
   listConversations,
+  rejectAction,
   sendChatMessage,
   toolLabel,
   type ConversationSummary,
+  type PendingAction,
 } from '../lib/chatApi'
 import { renderMarkdown } from '../lib/markdown'
 
@@ -17,6 +20,8 @@ interface ChatMessage {
   text: string
   tools?: string[]
   isError?: boolean
+  /** The result of a change the user decided on (shown as a short note). */
+  isNote?: boolean
 }
 
 const errorText = (err: unknown) => (err instanceof ChatError ? err.message : 'Something went wrong. Please try again.')
@@ -38,6 +43,9 @@ export default function Chat() {
   const [text, setText] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  // Changes the assistant proposed that wait for Approve or Reject, and the one being decided now.
+  const [pending, setPending] = useState<PendingAction[]>([])
+  const [deciding, setDeciding] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const refreshList = useCallback(async () => {
@@ -61,6 +69,7 @@ export default function Chat() {
     if (!openId) {
       setConversationId(null)
       setMessages([])
+      setPending([])
       return
     }
     if (openId === conversationId) return
@@ -71,10 +80,12 @@ export default function Chat() {
         if (cancelled) return
         setConversationId(conversation.id)
         setMessages(conversation.messages.map((m) => ({ role: m.role, text: m.text, tools: m.tools })))
+        setPending(conversation.pendingActions ?? [])
       })
       .catch((err) => {
         if (cancelled) return
         setConversationId(null)
+        setPending([])
         setMessages([{ role: 'assistant', text: errorText(err), isError: true }])
       })
       .finally(() => !cancelled && setIsLoading(false))
@@ -100,6 +111,7 @@ export default function Chat() {
     try {
       const result = await sendChatMessage(token, message, conversationId)
       setMessages((m) => [...m, { role: 'assistant', text: result.reply, tools: result.toolCallsExecuted }])
+      setPending((p) => [...p, ...(result.pendingActions ?? [])])
       if (result.conversationId !== conversationId) {
         setConversationId(result.conversationId)
         setParams({ c: result.conversationId }, { replace: true })
@@ -109,6 +121,29 @@ export default function Chat() {
       setMessages((m) => [...m, { role: 'assistant', text: errorText(err), isError: true }])
     } finally {
       setIsSending(false)
+    }
+  }
+
+  // Approve runs the change as the user; reject drops it. Either way the card goes and a short note
+  // says what happened. A 409 means it was already decided (or expired), so the card goes too.
+  async function onDecide(action: PendingAction, verb: 'approve' | 'reject') {
+    if (!token || deciding) return
+    setDeciding(action.id)
+    try {
+      const outcome = await (verb === 'approve' ? approveAction : rejectAction)(token, action.id)
+      setPending((p) => p.filter((a) => a.id !== action.id))
+      const text =
+        outcome.status === 'rejected'
+          ? `Dropped: ${action.preview}.`
+          : outcome.status === 'done'
+            ? outcome.result ?? 'Done.'
+            : `That did not go through: ${outcome.result ?? 'unknown error'}`
+      setMessages((m) => [...m, { role: 'assistant', text, isNote: true, isError: outcome.status === 'failed' }])
+    } catch (err) {
+      if (err instanceof ChatError && err.status === 409) setPending((p) => p.filter((a) => a.id !== action.id))
+      setMessages((m) => [...m, { role: 'assistant', text: errorText(err), isError: true }])
+    } finally {
+      setDeciding(null)
     }
   }
 
@@ -193,6 +228,32 @@ export default function Chat() {
               </p>
             )}
             {!isLoading && messages.map((m, i) => <MessageBubble key={i} message={m} />)}
+            {!isLoading && pending.length > 0 && (
+              <ul className="space-y-2" aria-label="Changes waiting for your approval">
+                {pending.map((action) => (
+                  <li key={action.id} className="rounded-lg border border-brand-200 bg-brand-50 p-3 space-y-2">
+                    <p className="text-xs font-medium text-brand-700">Waiting for your approval</p>
+                    <p className="text-sm text-slate-900 break-words">{action.preview}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => void onDecide(action, 'approve')}
+                        disabled={deciding !== null}
+                        className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-40"
+                      >
+                        {deciding === action.id ? 'Working…' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => void onDecide(action, 'reject')}
+                        disabled={deciding !== null}
+                        className="rounded-lg border border-surface-border bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-surface-hover disabled:opacity-40"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
             {isSending && <p className="text-sm text-slate-400 italic animate-pulse">Thinking…</p>}
             <div ref={bottomRef} />
           </section>
@@ -226,6 +287,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   }
   if (message.isError) {
     return <p className="text-sm text-red-600">{message.text}</p>
+  }
+  if (message.isNote) {
+    return <p className="text-sm text-emerald-700">{message.text}</p>
   }
   return (
     <div className="space-y-2">
