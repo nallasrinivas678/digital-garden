@@ -42,6 +42,8 @@ export default function Chat() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [isSending, setIsSending] = useState(false)
+  // Research: a slower, thorough answer with sources; it only reads, so it never proposes a change.
+  const [research, setResearch] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   // Changes the assistant proposed that wait for Approve or Reject, and the one being decided now.
   const [pending, setPending] = useState<PendingAction[]>([])
@@ -109,7 +111,7 @@ export default function Chat() {
     setMessages((m) => [...m, { role: 'user', text: message }])
     setIsSending(true)
     try {
-      const result = await sendChatMessage(token, message, conversationId)
+      const result = await sendChatMessage(token, message, conversationId, { research })
       setMessages((m) => [...m, { role: 'assistant', text: result.reply, tools: result.toolCallsExecuted }])
       setPending((p) => [...p, ...(result.pendingActions ?? [])])
       if (result.conversationId !== conversationId) {
@@ -254,11 +256,11 @@ export default function Chat() {
                 ))}
               </ul>
             )}
-            {isSending && <p className="text-sm text-slate-400 italic animate-pulse">Thinking…</p>}
+            {isSending && <p className="text-sm text-slate-400 italic animate-pulse">{research ? 'Researching… this can take a minute.' : 'Thinking…'}</p>}
             <div ref={bottomRef} />
           </section>
 
-          <form onSubmit={onSubmit} className="flex gap-2">
+          <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-2">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -274,6 +276,10 @@ export default function Chat() {
             >
               Send
             </button>
+            <label className="basis-full flex items-center gap-2 text-xs text-slate-500">
+              <input type="checkbox" checked={research} onChange={(e) => setResearch(e.target.checked)} />
+              Research: search the web in depth and answer with sources (read only, takes longer)
+            </label>
           </form>
         </div>
       </div>
