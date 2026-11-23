@@ -51,6 +51,12 @@ const TOOL_LABELS: Record<string, string> = {
   create_task: 'Proposed a task',
   complete_task: 'Proposed marking a task done',
   web_search: 'Searched the web',
+  read_email: 'Read an email',
+  list_documents: 'Looked at your documents',
+  ask_document: 'Asked one of your documents',
+  get_weather: 'Checked the weather',
+  calculate: 'Did a calculation',
+  save_profile: 'Proposed remembering something about you',
 }
 
 export const toolLabel = (name: string): string => TOOL_LABELS[name] ?? name
@@ -95,8 +101,27 @@ async function request(accessToken: string, path: string, init: RequestInit = {}
   return res
 }
 
-export async function sendChatMessage(accessToken: string, message: string, conversationId: string | null): Promise<ChatReply> {
-  const res = await request(accessToken, '/assistant/chat', { method: 'POST', body: JSON.stringify({ conversationId, message }) })
+/** The browser's own time zone (an IANA name such as America/Los_Angeles), so "tomorrow at noon" means the user's noon. */
+export function browserTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Sends one message. `research` asks for a researched answer with sources (more steps and time, reading
+ * only, no changes), which the service limits per hour.
+ */
+export async function sendChatMessage(
+  accessToken: string,
+  message: string,
+  conversationId: string | null,
+  options: { research?: boolean } = {},
+): Promise<ChatReply> {
+  const body = { conversationId, message, timeZone: browserTimeZone(), ...(options.research ? { mode: 'research' } : {}) }
+  const res = await request(accessToken, '/assistant/chat', { method: 'POST', body: JSON.stringify(body) })
   return (await res.json()) as ChatReply
 }
 
